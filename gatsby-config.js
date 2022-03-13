@@ -28,6 +28,7 @@ module.exports = {
         icon: config.manifestIcon, // This path is relative to the root of the site.
       },
     },
+    'gatsby-plugin-image',
     'gatsby-plugin-sass',
     'gatsby-plugin-offline',
     {
@@ -36,7 +37,7 @@ module.exports = {
         spaceId: process.env.CONTENTFUL_SPACE_ID,
         accessToken: process.env.CONTENTFUL_ACCESS_TOKEN,
         host: process.env.CONTENTFUL_HOST,
-        forceFullSync: activeEnv === "development"
+        // downloadLocal: true
       },
     },
     {

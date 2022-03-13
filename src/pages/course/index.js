@@ -12,16 +12,16 @@ import { BLOCKS } from '@contentful/rich-text-types';
 
 export const query = graphql`
   query {
-    contentfulCourses(id: {eq: "5e543b3b-a195-5695-9a77-d6bf3deb4bef"}) {
+    contentfulCourses(id: {eq: "e74e4356-4100-5ad6-9382-1e20fa1b6358"}) {
       classTitle
       classDescription {
-        json
+        raw
       }
       classDate
       projects {
         projectTitle
         projectDescription {
-          json
+          raw
         }
         youtubeID
         projectUrl
@@ -67,7 +67,7 @@ const Course = ({ data }) => {
             {data.contentfulCourses.classDate}
           </div>
           <div className="lead mb-5">
-            {documentToReactComponents(data.contentfulCourses.classDescription.json)}
+            {documentToReactComponents(JSON.parse(data.contentfulCourses.classDescription.raw))}
           </div>
           <div className="lead mb-5">
             {data.contentfulCourses.projects.map((project, index) => {
@@ -87,13 +87,13 @@ const Course = ({ data }) => {
           <h2 className="mb-5">Projects</h2>
 
           {data.contentfulCourses.projects.map((project, index) => {
-            console.log(project.projectDescription.json);
+            console.log(project.projectDescription.raw);
             return (
               <div id={project.id} key={project.id} className="resume-item d-flex flex-column flex-md-row justify-content-between mb-5">
 
                 <div key={project.id} className="resume-content">
                   <h3 className="mb-1">{project.projectTitle}</h3>
-                  {documentToReactComponents(project.projectDescription.json, options)}
+                  {documentToReactComponents(JSON.parse(project.projectDescription.raw))}
                   {project.youtubeID ? <YouTube videoId={project.youtubeID} /> : <p></p>}
                 </div>
                 <div className="resume-date text-md-right">

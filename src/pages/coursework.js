@@ -10,25 +10,25 @@ import { documentToReactComponents } from "@contentful/rich-text-react-renderer"
 export const query = graphql`
   query {
     allContentfulCourses {
-    edges {
-      node {
-        id
-        classTitle
-        classDescription {
-          json
-        }
-        classDate
-        projects {
+      edges {
+        node {
           id
-          projectTitle
-          projectDescription {
-            json
+          classTitle
+          classDescription {
+            raw
           }
-          youtubeID
+          classDate
+          projects {
+            id
+            projectTitle
+            projectDescription {
+              raw
+            }
+            youtubeID
+          }
         }
       }
     }
-  }
   }`;
 
 function DisplayProjects(props) {
@@ -79,14 +79,15 @@ const CourseWorkPage = ({ data }) => (
         <div className="w-100">
           <h2 className="mb-5">Courses</h2>
 
-          {data?.allContentfulCourses?.edges.map((course, index) => {
+          {data.allContentfulCourses.edges.map((course, index) => {
+            console.log("Course: ", course.node)
     
             return (
               <div key={course.id} className="resume-item d-flex flex-column flex-md-row justify-content-between mb-5">
                 <div key={course.id} className="resume-content">
                   <h3 className="mb-0">{}</h3>
                   <div className="subheading mb-3">{course.node.classTitle}</div>
-                  { documentToReactComponents(course.node.classDescription?.json)}
+                  { documentToReactComponents(JSON.parse(course.node.classDescription.raw))}
                   <DisplayProjects projects={course.node.projects} courseId={course.node.id}/>
                 </div>
                 
