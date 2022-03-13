@@ -31,7 +31,12 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: "public" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
-
+        env:
+          CONTENTFUL_ACCESS_TOKEN: ${{ secrets.CONTENTFUL_ACCESS_TOKEN }}
+          CONTENTFUL_SPACE_ID: i2v469lal2ph
+          CONTENTFUL_HOST: cdn.contentful.com
+          CONTENTFUL_DOWNLOAD_LOCAL: false
+          GATSBY_ACTIVE_ENV: production
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
