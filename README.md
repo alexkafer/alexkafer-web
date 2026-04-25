@@ -13,21 +13,30 @@ atomic per-session dedup of impression / click events.
 
 ```bash
 npm install
+npm run db:migrate:local   # creates the local D1 schema in .wrangler/
 npm run dev
 ```
 
 Open <http://localhost:3000>.
 
+> **Heads up — local D1 schema.** `next dev` connects to a local D1 instance
+> via OpenNext's dev hook. That database lives under `.wrangler/state/v3/d1/`
+> and starts empty. If you skip `npm run db:migrate:local` you'll see
+> `D1_ERROR: no such table: ab_events` in the Lab section. Re-run the migrate
+> command any time you add a new file to `migrations/` or wipe `.wrangler/`.
+
 Other scripts:
 
 ```bash
-npm run build      # production build (injects build SHA + time)
-npm run start      # serve production build
-npm run lint       # eslint via next lint
-npx tsc --noEmit   # type-check
-npm run cf:build   # OpenNext build for Cloudflare Workers
-npm run cf:preview # cf:build + wrangler local preview (D1 + DO bound)
-npm run cf:deploy  # cf:build + wrangler deploy
+npm run build              # production build (injects build SHA + time)
+npm run start              # serve production build
+npm run lint               # eslint via next lint
+npx tsc --noEmit           # type-check
+npm run db:migrate:local   # apply migrations/ to local D1 (.wrangler/)
+npm run db:migrate:remote  # apply migrations/ to the deployed D1
+npm run cf:build           # OpenNext build for Cloudflare Workers
+npm run cf:preview         # cf:build + wrangler local preview (D1 + DO bound)
+npm run cf:deploy          # cf:build + wrangler deploy
 ```
 
 ## Deploy to Cloudflare
@@ -51,8 +60,8 @@ wrangler login
 wrangler d1 create alexkafer-ab
 
 # Apply schema migrations (migrations/0001_init.sql).
-wrangler d1 migrations apply alexkafer-ab --local    # for cf:preview
-wrangler d1 migrations apply alexkafer-ab --remote   # for production
+npm run db:migrate:local    # for next dev + cf:preview (.wrangler/ local D1)
+npm run db:migrate:remote   # for production
 ```
 
 The `StatsAggregator` Durable Object class binding + its `v1` migration are

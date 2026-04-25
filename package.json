@@ -7,6 +7,8 @@
     "build": "NEXT_PUBLIC_BUILD_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo dev) NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) next build",
     "start": "next start",
     "lint": "next lint",
+    "db:migrate:local": "wrangler d1 migrations apply alexkafer-ab --local",
+    "db:migrate:remote": "wrangler d1 migrations apply alexkafer-ab --remote",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
