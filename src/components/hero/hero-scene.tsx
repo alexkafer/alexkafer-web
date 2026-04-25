@@ -4,14 +4,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { HERO_LINK_DISTANCE, useHeroNodes, type HeroNode } from "./use-hero-nodes";
+import { HERO_DEFAULT_NODE_COUNT, useHeroNodes, type HeroNode } from "./use-hero-nodes";
 import { NodeTooltips } from "./node-tooltips";
 
 const NODE_COLOR = "#7dd3fc";
 const STAR_COUNT = 1500;
 const STAR_RADIUS = 30;
-const CURSOR_INFLUENCE_RADIUS = 3.5;
-const CURSOR_STRENGTH = 0.6;
 const DAMPING = 0.05;
 
 function Starfield() {
@@ -65,10 +63,16 @@ type CursorState = { x: number; y: number; active: boolean };
 function ConstellationNodes({
   nodes,
   cursor,
+  nodeSize,
+  cursorRadius,
+  cursorStrength,
   onPositionsUpdate,
 }: {
   nodes: HeroNode[];
   cursor: React.MutableRefObject<CursorState>;
+  nodeSize: number;
+  cursorRadius: number;
+  cursorStrength: number;
   onPositionsUpdate?: (positions: THREE.Vector3[]) => void;
 }) {
   const refs = useRef<(THREE.Mesh | null)[]>([]);
@@ -89,13 +93,13 @@ function ConstellationNodes({
       projected.current.copy(camera.position).add(dir.multiplyScalar(distance));
     }
 
-    nodes.forEach((node, i) => {
+      nodes.forEach((node, i) => {
       const mesh = refs.current[i];
       if (!mesh) return;
       const { a, b, c, phaseX, phaseY, phaseZ, speed } = node.lissajous;
-      const ox = Math.sin(t * speed + phaseX) * a * 1.4;
-      const oy = Math.sin(t * speed * 1.3 + phaseY) * b * 1.4;
-      const oz = Math.sin(t * speed * 0.9 + phaseZ) * c * 1.4;
+      const ox = Math.sin(t * speed + phaseX) * a;
+      const oy = Math.sin(t * speed * 1.3 + phaseY) * b;
+      const oz = Math.sin(t * speed * 0.9 + phaseZ) * c;
       const baseX = node.base[0] + ox;
       const baseY = node.base[1] + oy;
       const baseZ = node.base[2] + oz;
@@ -107,9 +111,9 @@ function ConstellationNodes({
         const dy = projected.current.y - baseY;
         const dz = projected.current.z - baseZ;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist < CURSOR_INFLUENCE_RADIUS) {
-          const falloff = 1 - dist / CURSOR_INFLUENCE_RADIUS;
-          target.set(dx, dy, dz).multiplyScalar(falloff * CURSOR_STRENGTH);
+        if (dist < cursorRadius) {
+          const falloff = 1 - dist / cursorRadius;
+          target.set(dx, dy, dz).multiplyScalar(falloff * cursorStrength);
         }
       }
       const off = offsets.current[i];
@@ -134,7 +138,7 @@ function ConstellationNodes({
             refs.current[i] = el;
           }}
         >
-          <sphereGeometry args={[0.08, 16, 16]} />
+          <sphereGeometry args={[nodeSize, 16, 16]} />
           <meshStandardMaterial
             color={NODE_COLOR}
             emissive={NODE_COLOR}
@@ -148,7 +152,15 @@ function ConstellationNodes({
   );
 }
 
-function ConstellationLinks({ nodes, positionsRef }: { nodes: HeroNode[]; positionsRef: React.MutableRefObject<THREE.Vector3[]> }) {
+function ConstellationLinks({
+  nodes,
+  positionsRef,
+  linkDistance,
+}: {
+  nodes: HeroNode[];
+  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+  linkDistance: number;
+}) {
   // Build static pairs based on base positions; lines will visually approximate as positions move slightly.
   const pairs = useMemo(() => {
     const out: Array<[number, number]> = [];
@@ -158,11 +170,11 @@ function ConstellationLinks({ nodes, positionsRef }: { nodes: HeroNode[]; positi
         const dy = nodes[i].base[1] - nodes[j].base[1];
         const dz = nodes[i].base[2] - nodes[j].base[2];
         const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (d < HERO_LINK_DISTANCE) out.push([i, j]);
+        if (d < linkDistance) out.push([i, j]);
       }
     }
     return out;
-  }, [nodes]);
+  }, [nodes, linkDistance]);
 
   const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
 
@@ -229,9 +241,40 @@ function PointerTracker({ cursor }: { cursor: React.MutableRefObject<CursorState
 }
 
 function Scene() {
-  const nodes = useHeroNodes();
+  const { viewport } = useThree();
+  // Compute spread to fill ~88% of the visible canvas at the constellation's z=0 plane.
+  // Camera at z=8 fov=55 => visible vertical ≈ 8.33 world units; horizontal scales with aspect.
+  const halfW = viewport.width / 2;
+  const halfH = viewport.height / 2;
+  const spreadX = halfW * 0.88;
+  const spreadY = halfH * 0.78;
+  const spreadZ = Math.min(spreadX, spreadY) * 0.35;
+  const minDim = Math.min(spreadX, spreadY);
+
+  const isPortrait = viewport.width < viewport.height;
+  const isCompact = viewport.width < 6;
+  const nodeCount = isCompact ? 16 : isPortrait ? 20 : HERO_DEFAULT_NODE_COUNT;
+
+  const nodes = useHeroNodes({
+    count: nodeCount,
+    spreadX,
+    spreadY,
+    spreadZ,
+    seed: 1337,
+  });
+
+  // Visual constants scale with the smaller half-dimension so things read at every size.
+  const nodeSize = Math.max(0.06, minDim * 0.025);
+  const linkDistance = minDim * 0.7;
+  const cursorRadius = minDim * 0.55;
+  const cursorStrength = 0.6;
+
   const cursor = useRef<CursorState>({ x: 0, y: 0, active: false });
-  const positionsRef = useRef<THREE.Vector3[]>(nodes.map(() => new THREE.Vector3()));
+  const positionsRef = useRef<THREE.Vector3[]>([]);
+  // Keep positions array in sync with current node count (avoids stale refs after a resize-driven rebuild).
+  if (positionsRef.current.length !== nodes.length) {
+    positionsRef.current = nodes.map(() => new THREE.Vector3());
+  }
 
   return (
     <>
@@ -242,12 +285,15 @@ function Scene() {
       <ConstellationNodes
         nodes={nodes}
         cursor={cursor}
+        nodeSize={nodeSize}
+        cursorRadius={cursorRadius}
+        cursorStrength={cursorStrength}
         onPositionsUpdate={(p) => {
           for (let i = 0; i < p.length; i++) positionsRef.current[i].copy(p[i]);
         }}
       />
-      <ConstellationLinks nodes={nodes} positionsRef={positionsRef} />
-      <NodeTooltips nodes={nodes} />
+      <ConstellationLinks nodes={nodes} positionsRef={positionsRef} linkDistance={linkDistance} />
+      <NodeTooltips nodes={nodes} hitRadius={Math.max(0.4, minDim * 0.18)} htmlOffset={Math.max(0.25, nodeSize * 3)} />
     </>
   );
 }

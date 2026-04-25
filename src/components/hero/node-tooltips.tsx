@@ -23,7 +23,7 @@ function metaFor(id: string, index: number) {
   return { id, region, p99, rps };
 }
 
-export function NodeTooltips({ nodes }: { nodes: HeroNode[] }) {
+export function NodeTooltips({ nodes, hitRadius = 0.6, htmlOffset = 0.25 }: { nodes: HeroNode[]; hitRadius?: number; htmlOffset?: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
@@ -41,12 +41,12 @@ export function NodeTooltips({ nodes }: { nodes: HeroNode[] }) {
               }}
               onPointerOut={() => setHovered((h) => (h === i ? null : h))}
             >
-              <sphereGeometry args={[0.6, 12, 12]} />
+              <sphereGeometry args={[hitRadius, 12, 12]} />
               <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
             {isOpen && (
               <Html
-                position={[0, 0.25, 0]}
+                position={[0, htmlOffset, 0]}
                 center
                 distanceFactor={8}
                 zIndexRange={[40, 0]}
