@@ -43,14 +43,36 @@ vercel --prod
 
 ## Environment variables
 
-Both are optional and injected automatically by `npm run build` from local git
-state. On Vercel, set them as project env vars (Vercel auto-populates similar
-build metadata, but these names are read by the devtools overlay):
+`NEXT_PUBLIC_BUILD_*` are optional and injected automatically by `npm run build`
+from local git state. The `TURSO_*` vars are optional locally — when unset, the
+A/B test in the **Lab** section writes to a SQLite file at `./local.db` (which
+is gitignored). On Vercel, set the Turso vars to point at a hosted libsql DB so
+data persists across deploys.
 
-| Name                     | Used for                                          |
-| ------------------------ | ------------------------------------------------- |
-| `NEXT_PUBLIC_BUILD_SHA`  | Short git SHA shown in `?`-key devtools overlay   |
-| `NEXT_PUBLIC_BUILD_TIME` | ISO build timestamp shown in devtools overlay     |
+| Name                     | Used for                                                       |
+| ------------------------ | -------------------------------------------------------------- |
+| `NEXT_PUBLIC_BUILD_SHA`  | Short git SHA shown in `?`-key devtools overlay                |
+| `NEXT_PUBLIC_BUILD_TIME` | ISO build timestamp shown in devtools overlay                  |
+| `TURSO_DATABASE_URL`     | libsql URL for the A/B test DB (defaults to `file:./local.db`) |
+| `TURSO_AUTH_TOKEN`       | libsql auth token (required when using a hosted Turso DB)      |
+
+### Lab: live A/B test
+
+Section 10 (`Lab`) is a real A/B test backed by libsql/Turso. Each visitor is
+randomly assigned to variant A or B (cookie-persisted), the impression and
+conversion are stored in a `ab_events` table, and the on-page scorecard runs
+the same SQL query you can read in the live-query block.
+
+Locally this writes to `./local.db` (a SQLite file). For Vercel deploy,
+provision a Turso DB:
+
+```bash
+turso db create alexkafer-ab
+turso db show alexkafer-ab --url
+turso db tokens create alexkafer-ab
+```
+
+Then add `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` to Vercel project env vars.
 
 ## Easter eggs
 

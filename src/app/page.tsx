@@ -7,6 +7,7 @@ import Efficiency from "@/components/sections/efficiency";
 import Reach from "@/components/sections/reach";
 import Origin from "@/components/sections/origin";
 import Principles from "@/components/sections/principles";
+import ABTest from "@/components/sections/ab-test";
 import Footer from "@/components/chrome/footer";
 
 const Hero = dynamic(() => import("@/components/hero"), {
@@ -33,6 +34,7 @@ export default function Page() {
       <Reach />
       <Origin />
       <Principles />
+      <ABTest />
       <Footer />
       <DevtoolsOverlay />
       <KonamiEgg />

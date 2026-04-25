@@ -14,3 +14,6 @@ User actions required to take alexkafer.com live.
 - [ ] Confirm devtools overlay (`?`), Konami code, and view-source easter egg work in production
 - [ ] Reduced-motion preference respected (test in macOS *and* Windows accessibility settings)
 - [ ] Mobile smoke test on real iOS Safari + Android Chrome
+- [ ] Provision Turso DB (`turso db create alexkafer-ab`) and run `turso db tokens create alexkafer-ab`
+- [ ] Add `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` to Vercel env vars (production)
+- [ ] Verify A/B section loads, button click records to DB, scorecard updates
