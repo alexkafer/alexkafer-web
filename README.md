@@ -24,6 +24,17 @@ Open <http://localhost:3000>.
 > and starts empty. If you skip `npm run db:migrate:local` you'll see
 > `D1_ERROR: no such table: ab_events` in the Lab section. Re-run the migrate
 > command any time you add a new file to `migrations/` or wipe `.wrangler/`.
+>
+> **Heads up — Durable Object in dev.** Wrangler's `getPlatformProxy()` (the
+> dev hook used by `next dev`) registers DO bindings but cannot run custom DO
+> classes — it prints `These will not work in local development, but they
+> should work in production` at startup. The A/B routes detect this
+> (`NODE_ENV !== "production"`) and write directly to local D1 instead of
+> through the `StatsAggregator` DO. Dedup is best-effort in dev. To exercise
+> the full DO path locally, use `npm run cf:preview` (real OpenNext bundle in
+> `wrangler dev`). See [opennextjs-cloudflare#690][do-issue].
+>
+> [do-issue]: https://github.com/opennextjs/opennextjs-cloudflare/issues/690
 
 Other scripts:
 
