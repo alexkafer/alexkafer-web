@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import LenisProvider from "@/lib/lenis-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,7 +65,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <body>
-        {children}
+        <LenisProvider>{children}</LenisProvider>
         <script
           type="application/x-ascii-art"
           dangerouslySetInnerHTML={{ __html: ASCII_EASTER_EGG }}
