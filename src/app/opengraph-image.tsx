@@ -1,6 +1,12 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// OpenNext for Cloudflare bundles all routes into a single Workers script and
+// does not support `runtime = "edge"` in the main bundle. The default Node-style
+// runtime works fine for `next/og` under nodejs_compat — but its stricter CSS
+// parser trips on stacked radial-gradient shorthand at static-prerender time,
+// so we render on demand instead.
+export const dynamic = "force-dynamic";
+
 export const alt =
   "Alex Kafer · Senior PM, Xbox Platform · operating at billions/day";
 export const size = { width: 1200, height: 630 };
