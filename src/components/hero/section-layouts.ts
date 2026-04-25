@@ -138,8 +138,20 @@ const dualColumn: LayoutFn = (i, total, spread) => {
   ];
 };
 
+// Replaces the old SVG x-ray overlay on the disguise section: nodes scatter
+// across the full frame so the constellation lines themselves become the
+// "x-ray" pattern.
+const xray: LayoutFn = (i, total, spread) => {
+  const p = personality(i, total);
+  return [
+    (p.a * 2 - 1) * spread.x * 0.95,
+    (p.b * 2 - 1) * spread.y * 0.9,
+    (p.c * 2 - 1) * spread.z * 0.6,
+  ];
+};
+
 export const LAYOUTS = {
-  cloud, frameRight, corners, sweep, ring, curve, grid4, wide, triCluster, dualColumn,
+  cloud, frameRight, corners, sweep, ring, curve, grid4, wide, triCluster, dualColumn, xray,
 } as const;
 
 export type LayoutId = keyof typeof LAYOUTS;
@@ -154,7 +166,7 @@ export type SectionEntry = {
 // Order matches the page composition in app/page.tsx.
 export const SECTIONS: SectionEntry[] = [
   { id: "hero",        label: "IDENTIFIED CONTACT", version: "v0.0", layout: "cloud" },
-  { id: "disguise",    label: "THE DISGUISE",       version: "v0.2", layout: "frameRight" },
+  { id: "disguise",    label: "THE DISGUISE",       version: "v0.2", layout: "xray" },
   { id: "scale",       label: "SCALE",              version: "v0.3", layout: "corners" },
   { id: "velocity",    label: "VELOCITY",           version: "v0.4", layout: "sweep" },
   { id: "reliability", label: "RELIABILITY",        version: "v0.5", layout: "ring" },
