@@ -4,7 +4,10 @@ Single-page, scroll-driven personal site. "Shows, not tells" the story of a
 senior PM with deep platform-engineering instincts.
 
 Built with Next.js 14 (App Router) + TypeScript + Tailwind + React Three Fiber
-+ GSAP + Framer Motion + Lenis. Deployed to Vercel.
++ GSAP + Framer Motion + Lenis. Deployed to Cloudflare Workers via
+[OpenNext](https://opennext.js.org/cloudflare), with **Cloudflare D1** as the
+A/B-test source of truth and a **Durable Object** (`StatsAggregator`) for
+atomic per-session dedup of impression / click events.
 
 ## Run locally
 
@@ -22,57 +25,109 @@ npm run build      # production build (injects build SHA + time)
 npm run start      # serve production build
 npm run lint       # eslint via next lint
 npx tsc --noEmit   # type-check
+npm run cf:build   # OpenNext build for Cloudflare Workers
+npm run cf:preview # cf:build + wrangler local preview (D1 + DO bound)
+npm run cf:deploy  # cf:build + wrangler deploy
 ```
 
-## Deploy to Vercel
+## Deploy to Cloudflare
 
-### Option A — Import from GitHub (recommended)
+The site builds for Cloudflare Workers via `@opennextjs/cloudflare`. All Next.js
+routes (RSC + App Router + route handlers) run inside a single Worker, with
+D1 + a Durable Object bound in.
 
-1. Push the repo to GitHub.
-2. <https://vercel.com/new> → import the repo.
-3. Framework preset auto-detected as Next.js. No build/output overrides needed.
-4. Click **Deploy**.
-
-### Option B — Vercel CLI
+### Prerequisites
 
 ```bash
-npm i -g vercel
-vercel link
-vercel --prod
+npm i -g wrangler   # if you don't have it
+wrangler login
 ```
+
+### One-time provisioning
+
+```bash
+# Create the D1 database. Copy the printed database_id into wrangler.toml
+# (replace REPLACE_WITH_D1_ID).
+wrangler d1 create alexkafer-ab
+
+# Apply schema migrations (migrations/0001_init.sql).
+wrangler d1 migrations apply alexkafer-ab --local    # for cf:preview
+wrangler d1 migrations apply alexkafer-ab --remote   # for production
+```
+
+The `StatsAggregator` Durable Object class binding + its `v1` migration are
+declared in `wrangler.toml` and applied automatically on first `cf:deploy`.
+
+### Local preview against Cloudflare runtime
+
+```bash
+npm run cf:preview
+```
+
+This runs `opennextjs-cloudflare build` then boots wrangler's local Workers
+runtime with D1 + the DO bound to local SQLite/state in `.wrangler/`.
+
+### Deploy
+
+```bash
+npm run cf:deploy
+```
+
+Equivalent to `opennextjs-cloudflare build && opennextjs-cloudflare deploy` —
+builds the Worker bundle and uploads it via wrangler.
+
+### Local Next dev (no Cloudflare runtime)
+
+```bash
+npm run dev
+```
+
+`next dev` still works as before; the lab section falls back to a local
+`./local.db` libsql file. There's no Durable Object in this mode, so dedup is
+best-effort SELECT-1-then-INSERT — fine for single-process development.
 
 ## Environment variables
 
 `NEXT_PUBLIC_BUILD_*` are optional and injected automatically by `npm run build`
-from local git state. The `TURSO_*` vars are optional locally — when unset, the
-A/B test in the **Lab** section writes to a SQLite file at `./local.db` (which
-is gitignored). On Vercel, set the Turso vars to point at a hosted libsql DB so
-data persists across deploys.
+from local git state. In production the D1 database and Durable Object are
+exposed to the Worker as **bindings** declared in `wrangler.toml` — there are
+no Turso vars to set.
 
-| Name                     | Used for                                                       |
-| ------------------------ | -------------------------------------------------------------- |
-| `NEXT_PUBLIC_BUILD_SHA`  | Short git SHA shown in `?`-key devtools overlay                |
-| `NEXT_PUBLIC_BUILD_TIME` | ISO build timestamp shown in devtools overlay                  |
-| `TURSO_DATABASE_URL`     | libsql URL for the A/B test DB (defaults to `file:./local.db`) |
-| `TURSO_AUTH_TOKEN`       | libsql auth token (required when using a hosted Turso DB)      |
+| Name                     | Used for                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_BUILD_SHA`  | Short git SHA shown in `?`-key devtools overlay                                   |
+| `NEXT_PUBLIC_BUILD_TIME` | ISO build timestamp shown in devtools overlay                                     |
+| `TURSO_DATABASE_URL`     | _Local dev only._ libsql URL fallback (defaults to `file:./local.db`)             |
+| `TURSO_AUTH_TOKEN`       | _Local dev only._ libsql auth token (only needed if pointing at a hosted Turso)   |
+
+Cloudflare bindings (auto-provided in production via `wrangler.toml`):
+
+| Binding             | Type                  | Purpose                                       |
+| ------------------- | --------------------- | --------------------------------------------- |
+| `DB`                | D1 database           | `ab_events` source of truth                   |
+| `STATS_AGGREGATOR`  | Durable Object class  | Atomic per-session dedup + D1 write coordinator |
 
 ### Lab: live A/B test
 
-Section 10 (`Lab`) is a real A/B test backed by libsql/Turso. Each visitor is
-randomly assigned to variant A or B (cookie-persisted), the impression and
-conversion are stored in a `ab_events` table, and the on-page scorecard runs
-the same SQL query you can read in the live-query block.
+Section 10 (`Lab`) is a real A/B test. Each visitor is randomly assigned to
+variant A or B (cookie-persisted), and the impression + conversion are stored
+in D1's `ab_events` table.
 
-Locally this writes to `./local.db` (a SQLite file). For Vercel deploy,
-provision a Turso DB:
+Architecture in production:
 
-```bash
-turso db create alexkafer-ab
-turso db show alexkafer-ab --url
-turso db tokens create alexkafer-ab
-```
+- **Writes** (`/api/ab/impression`, `/api/ab/click`) call into the
+  `StatsAggregator` Durable Object (one DO instance per experiment, addressed
+  by `idFromName(EXPERIMENT_ID)`). The DO holds in-memory `Set<sessionId>`
+  bitmaps for impressions and conversions, persists them incrementally to DO
+  storage, and runs each dedup-check + D1 INSERT inside
+  `state.blockConcurrencyWhile` so concurrent requests for the same session
+  can't double-write.
+- **Reads** (`/api/ab/stats`) run the canonical SQL query directly against
+  D1 — the query you see displayed in the UI (`STATS_QUERY` in
+  `src/lib/ab.ts`) is the query that produces the displayed numbers.
 
-Then add `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` to Vercel project env vars.
+Locally (`npm run dev`) writes go to `./local.db` via libsql with best-effort
+dedup; there's no DO outside the Cloudflare runtime.
 
 ## Easter eggs
 
@@ -112,6 +167,7 @@ Before shipping, run:
 npm run lint
 npx tsc --noEmit
 npm run build
+npm run cf:build
 ```
 
 Then walk the `BROWSER_QA.md` and `LAUNCH_CHECKLIST.md` checklists.
