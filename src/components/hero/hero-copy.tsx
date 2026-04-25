@@ -2,9 +2,47 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { HeroCtaRow } from "./hero-cta-row";
+import { useABExperiment } from "@/lib/ab-context";
+
+function smoothScrollTo(selector: string) {
+  if (typeof document === "undefined") return;
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 export function HeroCopy() {
   const prefersReduced = useReducedMotion();
+  const { assigned, assignedRate } = useABExperiment();
+
+  const variantBadge = (
+    <span
+      aria-hidden
+      className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded bg-amber px-1 font-mono text-[10px] font-bold uppercase tracking-normal text-void align-middle"
+    >
+      {assigned ?? "…"}
+    </span>
+  );
+
+  const rateContent = (() => {
+    if (!assigned) return <span>{"// live · calibrating live experiment… · see the experiment ↓"}</span>;
+    if (assignedRate == null) {
+      return (
+        <span className="inline-flex items-center gap-1">
+          <span>{"// live · Variant"}</span>
+          {variantBadge}
+          <span>{"awaiting first conversion · see the experiment ↓"}</span>
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span>{"// live · Variant"}</span>
+        {variantBadge}
+        <span>{`converting at ${assignedRate.toFixed(1)}% · see the experiment ↓`}</span>
+      </span>
+    );
+  })();
 
   const container = {
     hidden: {},
@@ -51,11 +89,19 @@ export function HeroCopy() {
       </motion.div>
 
       <motion.div
-        animate={prefersReduced ? undefined : { y: [0, 6, 0] }}
-        transition={prefersReduced ? undefined : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-10 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/40"
+        className="pointer-events-auto absolute bottom-10"
+        initial={prefersReduced ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReduced ? 0 : 0.6, delay: prefersReduced ? 0 : 0.8 }}
       >
-        ↓ scroll to engage
+        <button
+          type="button"
+          onClick={() => smoothScrollTo("#lab")}
+          className="group inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/60 transition-colors hover:text-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900 rounded-sm"
+        >
+          <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-cyan/70" />
+          {rateContent}
+        </button>
       </motion.div>
     </div>
   );

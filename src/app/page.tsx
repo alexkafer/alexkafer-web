@@ -1,5 +1,7 @@
 import dynamic from "next/dynamic";
 import { ABExperimentProvider } from "@/lib/ab-context";
+import Hero from "@/components/hero";
+import HudChrome from "@/components/hero/hud-chrome";
 import Disguise from "@/components/sections/disguise";
 import Scale from "@/components/sections/scale";
 import Velocity from "@/components/sections/velocity";
@@ -11,10 +13,13 @@ import Principles from "@/components/sections/principles";
 import ABTest from "@/components/sections/ab-test";
 import Footer from "@/components/chrome/footer";
 
-const Hero = dynamic(() => import("@/components/hero"), {
-  ssr: false,
-  loading: () => <div className="h-screen" />,
-});
+const ConstellationBackground = dynamic(
+  () =>
+    import("@/components/hero/constellation-background").then(
+      (m) => m.ConstellationBackground,
+    ),
+  { ssr: false, loading: () => null },
+);
 const DevtoolsOverlay = dynamic(
   () => import("@/components/chrome/devtools-overlay"),
   { ssr: false },
@@ -26,7 +31,9 @@ const KonamiEgg = dynamic(() => import("@/components/chrome/konami-egg"), {
 export default function Page() {
   return (
     <ABExperimentProvider>
-      <main id="main-content" className="bg-void text-mute-100">
+      <ConstellationBackground />
+      <HudChrome />
+      <main id="main-content" className="relative text-mute-100">
         <Hero />
         <Disguise />
         <Scale />

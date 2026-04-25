@@ -13,7 +13,7 @@ function smoothScrollTo(selector: string) {
 
 export function HeroCtaRow() {
   const reduced = useReducedMotion();
-  const { assigned, assignedRate, converted, recordConversion } = useABExperiment();
+  const { assigned, converted, recordConversion } = useABExperiment();
 
   const cta = assigned ? VARIANT_CTAS[assigned] : null;
   const Icon = cta?.Icon;
@@ -26,12 +26,6 @@ export function HeroCtaRow() {
     // Fire-and-forget; opening happens via the anchor's default behavior in a new tab.
     void recordConversion();
   };
-
-  const rateLabel = (() => {
-    if (!assigned) return "calibrating live experiment…";
-    if (assignedRate == null) return `you're seeing variant ${assigned} · awaiting first conversion`;
-    return `variant ${assigned} converting at ${assignedRate.toFixed(1)}%`;
-  })();
 
   return (
     <motion.div
@@ -60,25 +54,16 @@ export function HeroCtaRow() {
         >
           <span
             aria-hidden
-            className="absolute -top-2 right-3 rounded-sm bg-amber px-1.5 py-px font-mono text-[9px] font-semibold uppercase tracking-widest text-void"
+            className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded bg-amber font-mono text-[10px] font-bold uppercase tracking-normal text-void"
             title="A/B test variant"
           >
-            {assigned ? `Variant ${assigned}` : "…"}
+            {assigned ?? "…"}
           </span>
           {Icon && <Icon />}
           <span>{cta?.label ?? "Loading…"}</span>
           {converted && <span aria-hidden className="text-amber">✓</span>}
         </a>
       </div>
-
-      <button
-        type="button"
-        onClick={() => smoothScrollTo("#lab")}
-        className="group inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/60 transition-colors hover:text-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900 rounded-sm"
-      >
-        <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-cyan/70" />
-        <span>{`// live · ${rateLabel} · see the experiment ↓`}</span>
-      </button>
     </motion.div>
   );
 }

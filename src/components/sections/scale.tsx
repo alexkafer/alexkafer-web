@@ -37,7 +37,7 @@ export function ScaleSection() {
   const reduced = useReducedMotion();
 
   return (
-    <Section id="scale" aria-label="Scale" className="bg-void">
+    <Section id="scale" aria-label="Scale">
       <SectionInner>
         <div className="relative">
           <div className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
