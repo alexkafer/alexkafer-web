@@ -79,14 +79,14 @@ export function OriginSection() {
           </h2>
           <p className="mt-6 max-w-2xl text-base text-mute-300">
             At Johnson Space Center, built an NLP tool that semantically grouped
-            program directives — collapsing requirement triage from six months
-            to under a week.
+            program directives — collapsing requirement triage from a
+            multi-month effort to a few days.
           </p>
 
           <div className="mt-14 flex flex-col gap-6">
             <div className="flex items-center gap-6">
               <span className="w-40 shrink-0 font-mono text-xs uppercase tracking-widest text-mute-500">
-                BEFORE · 6 months
+                MANUAL TRIAGE
               </span>
               <div className="relative h-3 flex-1 overflow-hidden rounded-sm bg-void-800/60">
                 <motion.div
@@ -99,7 +99,7 @@ export function OriginSection() {
 
             <div className="flex items-center gap-6">
               <span className="w-40 shrink-0 font-mono text-xs uppercase tracking-widest text-cyan [text-shadow:0_0_8px_rgba(125,211,252,0.6)]">
-                AFTER · &lt;1 week
+                WITH NLP
               </span>
               <div className="relative h-3 flex-1 overflow-hidden rounded-sm bg-void-800/60">
                 <motion.div

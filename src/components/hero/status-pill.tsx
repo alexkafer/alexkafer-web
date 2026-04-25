@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const REGIONS = ["westus2", "eastus", "sea", "weu", "jpe"] as const;
+const REGIONS = ["us-west-2", "us-east-1", "ap-southeast-1", "eu-central-1", "ap-northeast-1"] as const;
 
 function lcg(seed: number) {
   let s = seed >>> 0;
@@ -12,13 +12,20 @@ function lcg(seed: number) {
   };
 }
 
-const SEQUENCE = (() => {
+type PillItem =
+  | { region: string; kind: "p99"; p99: number }
+  | { region: string; kind: "q"; qdepth: number };
+
+const SEQUENCE: PillItem[] = (() => {
   const rand = lcg(424242);
-  return Array.from({ length: 32 }, () => ({
-    region: REGIONS[Math.floor(rand() * REGIONS.length)],
-    rps: (1.2 + rand() * 8.6).toFixed(1),
-    p99: 12 + Math.floor(rand() * 76),
-  }));
+  return Array.from({ length: 32 }, () => {
+    const region = REGIONS[Math.floor(rand() * REGIONS.length)];
+    const useP99 = rand() < 0.5;
+    if (useP99) {
+      return { region, kind: "p99" as const, p99: 12 + Math.floor(rand() * 76) };
+    }
+    return { region, kind: "q" as const, qdepth: 1 + Math.floor(rand() * 24) };
+  });
 })();
 
 export function StatusPill() {
@@ -40,9 +47,13 @@ export function StatusPill() {
       <span className="text-amber">●</span>{" "}
       <span>{item.region}</span>
       <span className="text-cyan/30"> · </span>
-      <span>{item.rps}k req/s</span>
+      {item.kind === "p99" ? (
+        <span>p99 {item.p99}ms</span>
+      ) : (
+        <span>q-depth {item.qdepth}</span>
+      )}
       <span className="text-cyan/30"> · </span>
-      <span>p99 {item.p99}ms</span>
+      <span>OK</span>
     </div>
   );
 }

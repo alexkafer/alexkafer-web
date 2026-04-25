@@ -31,6 +31,12 @@ export function HudChrome() {
         <span className="text-amber">●</span>
         <span>NOMINAL</span>
         <span className="text-cyan/30">|</span>
+        <span>SYS: NOMINAL</span>
+        <span className="text-cyan/30">|</span>
+        <span>LATENCY: GREEN</span>
+        <span className="text-cyan/30">|</span>
+        <span>COVERAGE: GLOBAL</span>
+        <span className="text-cyan/30">|</span>
         <span>47.6062°N, 122.3321°W</span>
         <span className="text-cyan/30">|</span>
         <span>T+ {fmtElapsed(elapsed)}</span>

@@ -1,188 +1,301 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import clsx from "clsx";
-import { animate, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { Section, SectionInner } from "@/components/section";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
-type Stat = {
+type Pillar = {
   id: string;
-  to: number;
-  decimals?: number;
-  prefix?: string;
-  suffix?: string;
-  format?: (v: number) => string;
-  from?: number;
-  duration?: number;
   label: string;
-  display: string;
+  caption: string;
 };
 
-const STATS: Stat[] = [
+const PILLARS: Pillar[] = [
   {
-    id: "teams",
-    from: 1,
-    to: 9,
-    duration: 1,
-    format: (v) => Math.round(v).toString(),
-    label: "partner teams onboarded",
-    display: "1 → 9",
+    id: "multi-team",
+    label: "// MULTI-TEAM",
+    caption: "Many partner teams on a shared platform.",
   },
   {
-    id: "mau",
-    to: 100,
-    duration: 1.6,
-    format: (v) => `${Math.round(v).toLocaleString()}M`,
-    label: "monthly active users",
-    display: "100M",
+    id: "user-reach",
+    label: "// USER REACH",
+    caption: "Users in every region.",
   },
   {
-    id: "services",
-    to: 100,
-    duration: 1.6,
-    format: (v) => `${Math.round(v).toLocaleString()}+`,
-    label: "microservices managed",
-    display: "100+",
+    id: "service-mesh",
+    label: "// SERVICE MESH",
+    caption: "Many microservices, one playbook.",
   },
   {
-    id: "requests",
-    to: 8.2,
-    decimals: 1,
-    duration: 1.8,
-    format: (v) => `${v.toFixed(1)}B`,
-    label: "requests handled per day",
-    display: "8.2B",
+    id: "throughput",
+    label: "// HIGH THROUGHPUT",
+    caption: "Sustained load, gracefully handled.",
   },
 ];
 
-function Counter({ stat, active }: { stat: Stat; active: boolean }) {
-  const reduced = useReducedMotion();
-  const [text, setText] = useState<string>(() => {
-    if (reduced) return stat.format ? stat.format(stat.to) : String(stat.to);
-    if (stat.id === "teams") return "1";
-    return stat.format ? stat.format(0) : "0";
-  });
-
-  useEffect(() => {
-    if (reduced) {
-      setText(stat.format ? stat.format(stat.to) : String(stat.to));
-      return;
-    }
-    if (!active) return;
-    const from = stat.from ?? 0;
-    const controls = animate(from, stat.to, {
-      duration: stat.duration ?? 1.4,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => {
-        setText(stat.format ? stat.format(v) : String(Math.round(v)));
-      },
-    });
-    return () => controls.stop();
-  }, [active, reduced, stat]);
-
-  return (
-    <span className="font-mono text-6xl font-medium text-cyan shadow-glow [text-shadow:0_0_18px_rgba(125,211,252,0.45)]">
-      {text}
-    </span>
-  );
-}
-
-type FlowPath = { d: string; dur: number; delay: number };
-
-function generateFlowPaths(): FlowPath[] {
-  // 6 deterministic curves traversing the card grid horizontally.
-  const base = [
-    "M 5,30 C 25,10 45,50 65,30 S 95,20 110,40",
-    "M 5,55 C 30,75 55,35 80,60 S 100,75 115,55",
-    "M 5,75 C 28,55 52,90 78,70 S 102,50 115,80",
-    "M 0,40 C 20,60 40,20 60,45 S 90,65 115,35",
-    "M 0,65 C 22,40 48,80 72,55 S 96,30 115,70",
-    "M 0,20 C 18,45 42,10 68,38 S 92,58 115,25",
-  ];
-  return base.map((d, i) => ({ d, dur: 4 + i * 0.6, delay: i * 0.4 }));
-}
-
 export function ScaleSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.3 });
   const reduced = useReducedMotion();
-  const flows = useMemo(generateFlowPaths, []);
 
   return (
     <Section id="scale" aria-label="Scale" className="bg-void">
       <SectionInner>
-        <div ref={ref} className="relative">
-          <div
-            className={clsx(
-              "font-mono text-xs uppercase tracking-[0.3em] text-amber",
-            )}
-          >
+        <div className="relative">
+          <div className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
             {"// 03 · SCALE"}
           </div>
           <h2 className="mt-6 max-w-4xl font-sans text-5xl font-bold tracking-tight text-mute-100 md:text-6xl lg:text-7xl">
-            Operating at billions per day.
+            Built for many teams. Built for many users.
           </h2>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute-300">
+            Platform services that compound — every onboarded team, every new
+            device, every additional region makes the next one cheaper to add.
+          </p>
 
-          <div className="relative mt-12">
-            {!reduced && (
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 115 90"
-                preserveAspectRatio="none"
-                className="pointer-events-none absolute inset-0 h-full w-full opacity-60"
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {PILLARS.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-md border border-mute-700/40 bg-void-800/40 p-6 backdrop-blur-sm"
               >
-                <defs>
-                  {flows.map((f, i) => (
-                    <path key={`p-${i}`} id={`flow-${i}`} d={f.d} fill="none" />
-                  ))}
-                </defs>
-                {flows.map((f, i) => (
-                  <g key={`g-${i}`}>
-                    <use
-                      href={`#flow-${i}`}
-                      stroke="#7dd3fc"
-                      strokeOpacity={0.08}
-                      strokeWidth={0.3}
-                      fill="none"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                    <circle r={0.6} fill="#7dd3fc">
-                      <animateMotion
-                        dur={`${f.dur}s`}
-                        begin={`${f.delay}s`}
-                        repeatCount="indefinite"
-                        rotate="auto"
-                      >
-                        <mpath href={`#flow-${i}`} />
-                      </animateMotion>
-                    </circle>
-                  </g>
-                ))}
-              </svg>
-            )}
-
-            <div className="relative grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {STATS.map((stat) => (
-                <div
-                  key={stat.id}
-                  className={clsx(
-                    "rounded-md border border-mute-700/40 bg-void-800/40 p-6 backdrop-blur-sm",
-                  )}
-                >
-                  <div className="leading-none">
-                    <Counter stat={stat} active={inView} />
-                  </div>
-                  <div className="mt-6 font-mono text-sm uppercase tracking-wider text-mute-300">
-                    {stat.label}
-                  </div>
+                <div className="flex h-20 items-center justify-center">
+                  <PillarVisual id={p.id} reduced={reduced} />
                 </div>
-              ))}
-            </div>
+                <div className="mt-6 font-mono text-sm uppercase tracking-wider text-cyan">
+                  {p.label}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-mute-300">
+                  {p.caption}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </SectionInner>
     </Section>
+  );
+}
+
+function PillarVisual({ id, reduced }: { id: string; reduced: boolean }) {
+  switch (id) {
+    case "multi-team":
+      return <MultiTeamViz />;
+    case "user-reach":
+      return <UserReachViz reduced={reduced} />;
+    case "service-mesh":
+      return <ServiceMeshViz />;
+    case "throughput":
+      return <ThroughputViz reduced={reduced} />;
+    default:
+      return null;
+  }
+}
+
+function MultiTeamViz() {
+  // Fan-in: 4 small filled circles on the left converging via lines into one larger circle on the right.
+  const sources = [
+    { x: 12, y: 12 },
+    { x: 12, y: 30 },
+    { x: 12, y: 50 },
+    { x: 12, y: 68 },
+  ];
+  const target = { x: 110, y: 40 };
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 130 80"
+      className="h-full w-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {sources.map((s, i) => (
+        <line
+          key={`l-${i}`}
+          x1={s.x}
+          y1={s.y}
+          x2={target.x}
+          y2={target.y}
+          stroke="#7dd3fc"
+          strokeOpacity="0.45"
+          strokeWidth="0.75"
+        />
+      ))}
+      {sources.map((s, i) => (
+        <circle key={`s-${i}`} cx={s.x} cy={s.y} r="3.5" fill="#7dd3fc" fillOpacity="0.85" />
+      ))}
+      <circle
+        cx={target.x}
+        cy={target.y}
+        r="9"
+        fill="#7dd3fc"
+        className="[filter:drop-shadow(0_0_6px_rgba(125,211,252,0.55))]"
+      />
+    </svg>
+  );
+}
+
+function UserReachViz({ reduced }: { reduced: boolean }) {
+  const center = { x: 65, y: 40 };
+  const rings = [0, 1, 2];
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 130 80"
+      className="h-full w-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <circle cx={center.x} cy={center.y} r="3" fill="#7dd3fc" />
+      {rings.map((i) => {
+        if (reduced) {
+          return (
+            <circle
+              key={i}
+              cx={center.x}
+              cy={center.y}
+              r={10 + i * 10}
+              fill="none"
+              stroke="#7dd3fc"
+              strokeOpacity={0.5 - i * 0.12}
+              strokeWidth="0.75"
+            />
+          );
+        }
+        return (
+          <motion.circle
+            key={i}
+            cx={center.x}
+            cy={center.y}
+            r={8}
+            fill="none"
+            stroke="#7dd3fc"
+            strokeWidth="0.75"
+            initial={{ r: 4, opacity: 0.55 }}
+            animate={{ r: 32, opacity: 0 }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeOut",
+              delay: i * 1,
+            }}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function ServiceMeshViz() {
+  // Deterministic node positions and edges.
+  const nodes = [
+    { x: 18, y: 18 },
+    { x: 50, y: 12 },
+    { x: 90, y: 22 },
+    { x: 22, y: 50 },
+    { x: 64, y: 44 },
+    { x: 108, y: 50 },
+    { x: 40, y: 70 },
+    { x: 88, y: 72 },
+  ];
+  const edges: Array<[number, number]> = [
+    [0, 1],
+    [1, 2],
+    [0, 3],
+    [1, 4],
+    [2, 5],
+    [3, 4],
+    [4, 5],
+    [3, 6],
+    [4, 7],
+    [6, 7],
+    [5, 7],
+  ];
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 130 80"
+      className="h-full w-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {edges.map(([a, b], i) => (
+        <line
+          key={`e-${i}`}
+          x1={nodes[a].x}
+          y1={nodes[a].y}
+          x2={nodes[b].x}
+          y2={nodes[b].y}
+          stroke="#7dd3fc"
+          strokeOpacity="0.3"
+          strokeWidth="0.6"
+        />
+      ))}
+      {nodes.map((n, i) => (
+        <circle key={`n-${i}`} cx={n.x} cy={n.y} r="2.5" fill="#7dd3fc" fillOpacity="0.9" />
+      ))}
+    </svg>
+  );
+}
+
+function ThroughputViz({ reduced }: { reduced: boolean }) {
+  // Sine waveform across the viewBox; phase animates.
+  const width = 130;
+  const height = 80;
+  const midY = height / 2;
+  const amp = 16;
+  const k = (2 * Math.PI) / 40;
+
+  function buildWave(phase: number): string {
+    const points: string[] = [];
+    for (let x = 0; x <= width; x += 2) {
+      const y = midY + amp * Math.sin(k * x + phase);
+      points.push(`${x === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(2)}`);
+    }
+    return points.join(" ");
+  }
+
+  const staticD = buildWave(0);
+
+  if (reduced) {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-full w-full"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <path
+          d={staticD}
+          fill="none"
+          stroke="#7dd3fc"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  const phases = Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2);
+  const waves = phases.map((p) => buildWave(p));
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox={`0 0 ${width} ${height}`}
+      className="h-full w-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <motion.path
+        fill="none"
+        stroke="#7dd3fc"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        className="[filter:drop-shadow(0_0_4px_rgba(125,211,252,0.45))]"
+        initial={{ d: waves[0] }}
+        animate={{ d: waves }}
+        transition={{
+          duration: 3.2,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+    </svg>
   );
 }
 

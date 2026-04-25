@@ -36,8 +36,8 @@ export function VelocitySection() {
             Time-to-market: months &rarr; weeks.
           </h2>
           <p className="max-w-2xl text-pretty text-lg leading-relaxed text-mute-300">
-            Reduced platform onboarding from a multi-month integration effort to
-            weeks, while serving billions of requests with 99.9% availability.
+            Reduced platform onboarding from months to weeks, without
+            compromising reliability.
           </p>
 
           <div className="space-y-3">

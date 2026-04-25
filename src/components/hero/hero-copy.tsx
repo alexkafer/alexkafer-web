@@ -42,7 +42,7 @@ export function HeroCopy() {
             variants={line}
             className="font-sans text-lg font-light tracking-tight text-cyan sm:text-xl md:text-2xl"
           >
-            Operating at billions/day.
+            Operating at platform scale.
           </motion.span>
         </h1>
       </motion.div>

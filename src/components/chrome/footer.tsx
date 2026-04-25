@@ -66,7 +66,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="text-[10px] text-mute-500 sm:text-xs">
-          {"// transmission stable · 99.9% · req/s 8.2k"}
+          {"// transmission stable · all systems nominal"}
         </p>
       </div>
     </footer>

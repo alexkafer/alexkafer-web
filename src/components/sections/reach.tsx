@@ -90,17 +90,17 @@ export function ReachSection() {
             Xbox Remote Play, anywhere.
           </h2>
           <p className="mt-6 max-w-2xl text-base text-mute-300">
-            Owned Xbox Remote Play — the experience that lets 2M MAU stream
-            their console from any device. Led the endpoint expansion to web,
+            Owned Xbox Remote Play — the experience that lets users stream their
+            console from any device. Led the endpoint expansion to web,
             SmartTV, and Meta Quest.
           </p>
 
           <div className="mt-12 flex flex-col">
             <span className="font-mono text-xs uppercase tracking-widest text-mute-500">
-              MONTHLY ACTIVE USERS
+              REACH
             </span>
             <span className="mt-2 font-mono text-4xl text-cyan [text-shadow:0_0_12px_rgba(125,211,252,0.6)]">
-              2M MAU
+              Console-quality, anywhere.
             </span>
           </div>
 

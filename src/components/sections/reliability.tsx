@@ -26,18 +26,15 @@ export function ReliabilitySection() {
     [GAUGE_CIRC, GAUGE_CIRC * (1 - TARGET_PCT / 100)],
   );
 
-  const [pct, setPct] = useState(reduced ? TARGET_PCT : 0);
   const [litTiles, setLitTiles] = useState(reduced ? TILE_COUNT : 0);
 
   useMotionValueEvent(progress, "change", (v) => {
     if (reduced) return;
-    setPct(Math.min(TARGET_PCT, v * TARGET_PCT));
     setLitTiles(Math.round(v * TILE_COUNT));
   });
 
   useEffect(() => {
     if (reduced) {
-      setPct(TARGET_PCT);
       setLitTiles(TILE_COUNT);
     }
   }, [reduced]);
@@ -45,7 +42,7 @@ export function ReliabilitySection() {
   return (
     <Section
       id="reliability"
-      aria-label="Reliability: 99.9% availability across 100k+ Azure resources"
+      aria-label="Reliability is the product"
     >
       <SectionInner className="flex min-h-screen flex-col justify-center gap-12">
         <div
@@ -56,11 +53,11 @@ export function ReliabilitySection() {
             {"// 05 · RELIABILITY"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">
-            99.9% availability. Zero incidents.
+            Reliability is the product.
           </h2>
           <p className="max-w-2xl text-pretty text-lg leading-relaxed text-mute-300">
-            Coordinated multistage infrastructure migrations on 100k+ Azure
-            resources without a single user-impacting incident.
+            Coordinated multistage infrastructure migrations across thousands of
+            resources without user-impacting incidents.
           </p>
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -74,7 +71,7 @@ export function ReliabilitySection() {
                   height={GAUGE_SIZE}
                   viewBox={`0 0 ${GAUGE_SIZE} ${GAUGE_SIZE}`}
                   role="img"
-                  aria-label={`Availability gauge at ${pct.toFixed(1)} percent`}
+                  aria-label="Availability gauge — stable"
                   style={{ transform: "rotate(-90deg)" }}
                 >
                   <circle
@@ -111,9 +108,12 @@ export function ReliabilitySection() {
                     />
                   )}
                 </svg>
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <span className="font-mono text-3xl text-cyan shadow-glow [text-shadow:0_0_12px_rgba(125,211,252,0.6)]">
-                    {pct.toFixed(1)}%
+                    STABLE
+                  </span>
+                  <span className="mt-1 font-mono text-[10px] uppercase tracking-widest text-cyan/70">
+                    {"// nominal"}
                   </span>
                 </div>
               </div>
@@ -125,7 +125,7 @@ export function ReliabilitySection() {
             <div className="flex flex-col items-center justify-center gap-3 lg:items-start">
               <div
                 role="img"
-                aria-label={`${litTiles} of ${TILE_COUNT} tiles lit, representing 100k+ Azure resources`}
+                aria-label={`${litTiles} of ${TILE_COUNT} tiles lit, representing migrated resources`}
                 className="grid gap-[3px]"
                 style={{
                   gridTemplateColumns: `repeat(${TILE_COLS}, minmax(0, 1fr))`,
@@ -147,7 +147,7 @@ export function ReliabilitySection() {
                 })}
               </div>
               <p className="font-mono text-xs uppercase tracking-widest text-mute-500">
-                100k+ resources · zero incidents
+                Resources migrated · zero incidents.
               </p>
             </div>
           </div>
