@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { ABExperimentProvider } from "@/lib/ab-context";
 import Disguise from "@/components/sections/disguise";
 import Scale from "@/components/sections/scale";
 import Velocity from "@/components/sections/velocity";
@@ -24,32 +25,34 @@ const KonamiEgg = dynamic(() => import("@/components/chrome/konami-egg"), {
 
 export default function Page() {
   return (
-    <main id="main-content" className="bg-void text-mute-100">
-      <Hero />
-      <Disguise />
-      <Scale />
-      <Velocity />
-      <Reliability />
-      <Efficiency />
-      <Reach />
-      <Origin />
-      <Principles />
-      <ABTest />
-      <Footer />
-      <DevtoolsOverlay />
-      <KonamiEgg />
+    <ABExperimentProvider>
+      <main id="main-content" className="bg-void text-mute-100">
+        <Hero />
+        <Disguise />
+        <Scale />
+        <Velocity />
+        <Reliability />
+        <Efficiency />
+        <Reach />
+        <Origin />
+        <Principles />
+        <ABTest />
+        <Footer />
+        <DevtoolsOverlay />
+        <KonamiEgg />
 
-      <div className="sr-only">
-        <h2>About Alex Kafer</h2>
-        <p>
-          Senior Product Manager on the Xbox Platform team at Microsoft. Five
-          years of platform-engineering experience building secure, reliable,
-          efficient services at scale. Previously: Xbox Cloud Gaming, Xbox
-          Remote Play, and a NASA-JSC NLP requirements-tooling project. B.S.
-          Computer Science, University of Minnesota — robotics + AI
-          specialization with a product design minor.
-        </p>
-      </div>
-    </main>
+        <div className="sr-only">
+          <h2>About Alex Kafer</h2>
+          <p>
+            Senior Product Manager on the Xbox Platform team at Microsoft. Five
+            years of platform-engineering experience building secure, reliable,
+            efficient services at scale. Previously: Xbox Cloud Gaming, Xbox
+            Remote Play, and a NASA-JSC NLP requirements-tooling project. B.S.
+            Computer Science, University of Minnesota — robotics + AI
+            specialization with a product design minor.
+          </p>
+        </div>
+      </main>
+    </ABExperimentProvider>
   );
 }

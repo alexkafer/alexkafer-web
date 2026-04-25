@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { HeroCtaRow } from "./hero-cta-row";
 
 export function HeroCopy() {
   const prefersReduced = useReducedMotion();
@@ -45,6 +46,8 @@ export function HeroCopy() {
             Operating at platform scale.
           </motion.span>
         </h1>
+
+        <HeroCtaRow />
       </motion.div>
 
       <motion.div
