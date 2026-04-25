@@ -33,7 +33,7 @@ export default function Page() {
     <ABExperimentProvider>
       <ConstellationBackground />
       <HudChrome />
-      <main id="main-content" className="relative text-mute-100">
+      <main id="main-content" className="relative z-10 text-mute-100">
         <Hero />
         <Disguise />
         <Scale />

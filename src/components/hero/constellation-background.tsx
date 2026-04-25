@@ -93,14 +93,14 @@ export function ConstellationBackground() {
       <ScrollDriver />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
+        className="pointer-events-none fixed inset-0 z-0"
       >
         <HeroScene />
       </div>
       {/* Soft vignette over the scene so section copy stays readable. */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
+        className="pointer-events-none fixed inset-0 z-0"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(5,5,16,0) 0%, rgba(5,5,16,0.55) 60%, rgba(5,5,16,0.92) 100%)",
