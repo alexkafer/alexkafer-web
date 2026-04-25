@@ -177,21 +177,24 @@ function ConstellationLinks({
   }, [nodes, linkDistance]);
 
   const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
+  const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
   useFrame(() => {
     pairs.forEach(([i, j], k) => {
-      const ref = lineRefs.current[k] as unknown as { geometry?: THREE.BufferGeometry } | null;
-      if (!ref || !ref.geometry) return;
+      // drei's <Line> wraps three-stdlib's Line2 / LineGeometry, which stores
+      // positions in interleaved instanceStart/instanceEnd buffers — NOT in the
+      // standard `geometry.attributes.position`. The proper way to mutate them
+      // each frame is the LineGeometry.setPositions() helper.
+      const obj = lineRefs.current[k] as unknown as {
+        geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
+      } | null;
+      if (!obj?.geometry?.setPositions) return;
       const a = positionsRef.current[i];
       const b = positionsRef.current[j];
-      const arr = ref.geometry.attributes.position.array as Float32Array;
-      arr[0] = a.x;
-      arr[1] = a.y;
-      arr[2] = a.z;
-      arr[3] = b.x;
-      arr[4] = b.y;
-      arr[5] = b.z;
-      ref.geometry.attributes.position.needsUpdate = true;
+      const buf = segBuffer.current;
+      buf[0] = a.x; buf[1] = a.y; buf[2] = a.z;
+      buf[3] = b.x; buf[4] = b.y; buf[5] = b.z;
+      obj.geometry.setPositions(buf);
     });
   });
 
