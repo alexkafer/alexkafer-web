@@ -34,6 +34,17 @@ export const metadata: Metadata = {
     title: "Alex Kafer — Senior PM, Xbox Platform",
     description: "Building secure, reliable platform services at billions/day.",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {
