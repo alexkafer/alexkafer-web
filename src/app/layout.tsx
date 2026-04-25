@@ -76,6 +76,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <body>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-cyan focus:px-4 focus:py-2 focus:text-void"
+        >
+          Skip to content
+        </a>
         <LenisProvider>{children}</LenisProvider>
         <script
           type="application/x-ascii-art"
