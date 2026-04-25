@@ -60,9 +60,17 @@ export async function getDb(): Promise<DbClient> {
     return cached;
   }
 
-  // Local fallback: libsql against a file. We dynamic-import so the bundler
-  // doesn't try to ship @libsql/client into the Worker bundle.
-  const { createClient } = await import("@libsql/client");
+  // Local fallback: libsql against a file. We resolve the module name through
+  // an opaque indirection so neither Next's webpack nor OpenNext's esbuild
+  // tries to bundle the native libsql client into the Worker — the import
+  // string is unanalyzable, so it stays as a runtime dynamic import resolved
+  // by Node when the dev server runs.
+  const libsqlSpecifier = ["@libsql", "client"].join("/");
+  const dynamicImport = new Function(
+    "p",
+    "return import(p)",
+  ) as (p: string) => Promise<typeof import("@libsql/client")>;
+  const { createClient } = await dynamicImport(libsqlSpecifier);
   const client = createClient({
     url: process.env.TURSO_DATABASE_URL ?? "file:./local.db",
     authToken: process.env.TURSO_AUTH_TOKEN,
