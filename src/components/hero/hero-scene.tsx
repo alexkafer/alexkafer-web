@@ -277,8 +277,11 @@ function ConstellationLinks({
       const dz = a.z - b.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (obj.material) {
+        // Linear falloff with a generous base so lines read clearly. Lines
+        // beyond the cutoff fade to 0; nearby lines stay close to full
+        // opacity so the constellation feels connected.
         const visible = Math.max(0, 1 - dist / cutoff);
-        obj.material.opacity = 0.18 * visible * visible;
+        obj.material.opacity = 0.55 * visible;
       }
     });
   });
@@ -293,9 +296,9 @@ function ConstellationLinks({
           }}
           points={[[0, 0, 0], [0, 0, 0]]}
           color={NODE_COLOR}
-          opacity={0.15}
+          opacity={0.55}
           transparent
-          lineWidth={1}
+          lineWidth={1.4}
         />
       ))}
     </group>
