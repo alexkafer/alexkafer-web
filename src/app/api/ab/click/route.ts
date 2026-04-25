@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    await ensureSchema();
+    const db = await getDb();
+    await ensureSchema(db);
     const body = (await req.json().catch(() => ({}))) as { variant?: string };
     if (body.variant !== "A" && body.variant !== "B") {
       return NextResponse.json(
@@ -25,18 +26,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const db = getDb();
-    const existing = await db.execute({
-      sql: `SELECT 1 FROM ab_events WHERE session_id=? AND experiment=? AND event='conversion' LIMIT 1`,
-      args: [sessionId, EXPERIMENT_ID],
-    });
+    const existing = await db.execute(
+      `SELECT 1 FROM ab_events WHERE session_id=? AND experiment=? AND event='conversion' LIMIT 1`,
+      [sessionId, EXPERIMENT_ID],
+    );
 
     const alreadyConverted = existing.rows.length > 0;
     if (!alreadyConverted) {
-      await db.execute({
-        sql: `INSERT INTO ab_events (ts, session_id, experiment, variant, event) VALUES (?, ?, ?, ?, 'conversion')`,
-        args: [Date.now(), sessionId, EXPERIMENT_ID, variant],
-      });
+      await db.execute(
+        `INSERT INTO ab_events (ts, session_id, experiment, variant, event) VALUES (?, ?, ?, ?, 'conversion')`,
+        [Date.now(), sessionId, EXPERIMENT_ID, variant],
+      );
     }
 
     return NextResponse.json({ ok: true, alreadyConverted, variant });

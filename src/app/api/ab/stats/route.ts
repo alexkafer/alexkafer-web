@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await ensureSchema();
-    const db = getDb();
+    const db = await getDb();
+    await ensureSchema(db);
     const result = await db.execute(STATS_QUERY);
 
     const rows: StatsRow[] = result.rows.map((r) => ({
