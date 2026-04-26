@@ -197,7 +197,7 @@ export function ABTestSection() {
   return (
     <Section id="lab" aria-label="Live A/B test">
       <SectionInner>
-        <p className="font-mono text-xs uppercase tracking-widest text-amber">
+        <p id="lab-marker" className="font-mono text-xs uppercase tracking-widest text-amber">
           {"// 10 · LAB"}
         </p>
         <h2 className="mt-4 text-4xl font-semibold text-mute-100 md:text-5xl">

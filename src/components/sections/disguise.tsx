@@ -23,6 +23,7 @@ export function DisguiseSection() {
               className="max-w-4xl"
             >
               <div
+                id="disguise-marker"
                 className={clsx(
                   "mb-8 font-mono text-xs uppercase tracking-[0.3em] text-mute-300",
                 )}
