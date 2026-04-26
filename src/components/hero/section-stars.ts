@@ -52,9 +52,11 @@ export type SectionAssignment = {
 };
 
 const NEIGHBORS_PER_SECTION = 3;
-// Section 1 parks at LEFT-CENTER (angle π in math convention). Subsequent
-// sections walk clockwise (decreasing math angle) by `angularStep`.
-const LEFT_ANGLE = Math.PI;
+// Section 1 parks at SW / bottom-left (LEFT + 45° counter-clockwise = 5π/4
+// in math convention). Subsequent sections walk clockwise (decreasing math
+// angle) by `angularStep`. To put section 1 at pure WEST instead, set this
+// to Math.PI; for NW use Math.PI * 3/4; etc.
+const LEFT_ANGLE = Math.PI + Math.PI / 4;
 
 function angleDelta(a: number, b: number) {
   let d = a - b;
