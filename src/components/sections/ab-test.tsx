@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Section, SectionInner } from "@/components/section";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -23,20 +23,6 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(diff / 3_600_000)}h ago`;
 }
 
-function pickWinner(rows: StatsRow[]): Variant | null {
-  const valid = rows.filter(
-    (r) => r.conversion_rate_pct !== null && r.impressions > 0,
-  );
-  if (valid.length === 0) return null;
-  const sorted = [...valid].sort(
-    (a, b) => (b.conversion_rate_pct ?? 0) - (a.conversion_rate_pct ?? 0),
-  );
-  if (sorted.length > 1 && sorted[0].conversion_rate_pct === sorted[1].conversion_rate_pct) {
-    return null;
-  }
-  return sorted[0].variant;
-}
-
 function smoothScrollUp() {
   if (typeof window === "undefined") return;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -45,12 +31,10 @@ function smoothScrollUp() {
 function VariantPreviewCard({
   variant,
   isAssigned,
-  isWinner,
   converted,
 }: {
   variant: Variant;
   isAssigned: boolean;
-  isWinner: boolean;
   converted: boolean;
 }) {
   const cta = VARIANT_CTAS[variant];
@@ -69,7 +53,6 @@ function VariantPreviewCard({
           Variant {variant}
         </span>
         <div className="flex items-center gap-1.5">
-          {isWinner && <span className="text-cyan">◆ winner</span>}
           {isAssigned && <span className="text-amber">you</span>}
         </div>
       </div>
@@ -94,12 +77,10 @@ function VariantPreviewCard({
 function Scorecard({
   rows,
   generatedAt,
-  winner,
   assigned,
 }: {
   rows: StatsRow[];
   generatedAt: string | null;
-  winner: Variant | null;
   assigned: Variant | null;
 }) {
   const [, forceTick] = useState(0);
@@ -137,26 +118,17 @@ function Scorecard({
         <tbody>
           {variants.map((v) => {
             const row = map.get(v);
-            const isWinner = winner === v;
             const isAssigned = assigned === v;
             return (
               <tr
                 key={v}
-                className={[
-                  "border-t border-mute-700/40 font-mono text-sm",
-                  isWinner ? "border-l-2 border-l-cyan bg-cyan/5" : "",
-                ].join(" ")}
+                className="border-t border-mute-700/40 font-mono text-sm"
               >
                 <th
                   scope="row"
                   className="px-4 py-3 text-left font-mono text-base font-bold text-mute-100"
                 >
                   {v}
-                  {isWinner && (
-                    <span className="ml-2 font-mono text-[10px] uppercase tracking-widest text-cyan">
-                      ◆ winner
-                    </span>
-                  )}
                   {isAssigned && (
                     <span className="ml-2 font-mono text-[10px] uppercase tracking-widest text-amber">
                       you
@@ -191,7 +163,6 @@ export function ABTestSection() {
   const reduced = useReducedMotion();
   const { sessionId, assigned, converted, stats, error, reroll } = useABExperiment();
 
-  const winner = useMemo(() => pickWinner(stats?.rows ?? []), [stats]);
   const query = stats?.query ?? "-- loading…";
 
   return (
@@ -226,13 +197,11 @@ export function ABTestSection() {
               <VariantPreviewCard
                 variant="A"
                 isAssigned={assigned === "A"}
-                isWinner={winner === "A"}
                 converted={converted}
               />
               <VariantPreviewCard
                 variant="B"
                 isAssigned={assigned === "B"}
-                isWinner={winner === "B"}
                 converted={converted}
               />
             </div>
@@ -284,7 +253,6 @@ export function ABTestSection() {
               <Scorecard
                 rows={stats?.rows ?? []}
                 generatedAt={stats?.generatedAt ?? null}
-                winner={winner}
                 assigned={assigned}
               />
             </div>
