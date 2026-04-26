@@ -21,9 +21,10 @@
 // hero-scene.tsx applies a scroll-driven rotation to the parked layout
 // (see `parkedRotation` in ConstellationNodes.useFrame). For active section
 // `s`, the rotation is `(s - 1) * angularStep`, which brings that section's
-// natural slot back to LEFT. Between sections, rotation lerps with `blend`,
-// so the next anchor is already near LEFT by the time its heading scrolls
-// in. Because the rotation is uniform, all parked distances (and therefore
+// natural slot back to LEFT. Between sections, rotation runs on its own
+// fast blend curve (completes ~10% past the section midpoint) so the next
+// anchor is already at LEFT by the time its heading enters the viewport.
+// Because the rotation is uniform, all parked distances (and therefore
 // `computeNeighborPairs` results) are unchanged.
 //
 // ADDING / REMOVING SECTIONS

@@ -43,7 +43,11 @@ import { getAnchorWorldPos } from "./dom-anchor";
 // half, ramps 0→1 across the second half). Each frame this scene reads:
 //   heroBlend       = (activeIndex === 0) ? (1 - blend) : 0
 //   parkedRotation  = lerp(rotationFor(activeIndex), rotationFor(nextIndex),
-//                          blend), where rotationFor(s) = (s - 1) * step.
+//                          rotationBlend), where rotationFor(s) = (s-1)·step
+//                          and rotationBlend ramps fast over progress
+//                          [0.5, 0.6] of the section (independent of `blend`
+//                          so the cloud→parked beat stays leisurely while
+//                          the inter-section rotation snaps).
 // See section-layouts.ts and section-stars.ts for the geometry side.
 //
 // COMMON TWEAKS
@@ -240,17 +244,27 @@ function ConstellationNodes({
     // Scroll-driven Z-rotation of the parked layout: bring the upcoming
     // section's anchor star around to LEFT-CENTER (where its DOM heading
     // sits) before that section scrolls into view. Section indices walk
-    // clockwise around the ring, so each step is a positive math-angle
-    // delta of -angularStep (i.e., rotate counter-clockwise to bring the
-    // next clockwise slot to LEFT). We negate to get the right sign for
-    // applyAxisAngle around +Z.
+    // clockwise around the ring, so rotationFor(s) = (s-1) * angularStep
+    // brings section s's natural slot back to LEFT.
+    //
+    // Rotation has its own faster blend curve (independent of `sc.blend`,
+    // which paces the cloud→parked morph). The next-section header crosses
+    // the bottom of the viewport at roughly progress≈0.5 of the current
+    // section; we want rotation effectively complete by progress≈0.6 so
+    // the anchor star is in position right as the header enters view —
+    // BASE_LERP smoothing handles the visual settle from there. Tweak the
+    // multiplier (currently 10) to widen/narrow that window.
     const sectionCount = Math.max(1, LABS.length - 1);
     const angularStep = (Math.PI * 2) / sectionCount;
     const rotationFor = (idx: number) =>
       idx <= 0 ? 0 : (idx - 1) * angularStep;
+    const rotationBlend = Math.min(
+      1,
+      Math.max(0, (sc.progress - 0.5) * 10),
+    );
     const r0 = rotationFor(sc.activeIndex);
     const r1 = rotationFor(sc.nextIndex);
-    const parkedRotation = r0 + (r1 - r0) * sc.blend;
+    const parkedRotation = r0 + (r1 - r0) * rotationBlend;
 
     nodes.forEach((node, i) => {
       const mesh = refs.current[i];
