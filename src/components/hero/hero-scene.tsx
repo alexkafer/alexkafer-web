@@ -2,11 +2,13 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { HERO_DEFAULT_NODE_COUNT } from "./use-hero-nodes";
-import { LAYOUTS, SECTIONS, type LayoutFn } from "./section-layouts";
-import { getScrollState } from "./scroll-state";
+import { LAYOUTS } from "./section-layouts";
+import { getScrollState, subscribeScrollState } from "./scroll-state";
+import { FlybyStar } from "./flyby-star";
+import { LABS } from "@/labs";
 
 const NODE_COLOR = "#7dd3fc";
 const STAR_COUNT = 1500;
@@ -131,10 +133,11 @@ function ConstellationNodes({
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     const sc = getScrollState().current;
-    const active = SECTIONS[sc.activeIndex] ?? SECTIONS[0];
-    const next = SECTIONS[sc.nextIndex] ?? active;
-    const layoutA: LayoutFn = LAYOUTS[active.layout];
-    const layoutB: LayoutFn = LAYOUTS[next.layout];
+
+    // Hero blend: 1 in pure hero, falls to 0 as we leave hero, stays 0
+    // throughout section view. Used to fade constellation in/out.
+    const heroBlend =
+      sc.activeIndex === 0 ? 1 - sc.blend : 0;
 
     if (cursor.current.active) {
       projected.current.set(cursor.current.x, cursor.current.y, 0.5);
@@ -144,16 +147,15 @@ function ConstellationNodes({
       projected.current.copy(camera.position).add(dir.multiplyScalar(distance));
     }
 
+    const layout = LAYOUTS.cloud;
+
     nodes.forEach((node, i) => {
       const mesh = refs.current[i];
       if (!mesh) return;
 
-      // Blend the two section layouts to find this frame's target base.
-      const aArr = layoutA(i, nodes.length, spread);
-      const bArr = layoutB(i, nodes.length, spread);
-      node.a.set(aArr[0], aArr[1], aArr[2]);
-      node.b.set(bArr[0], bArr[1], bArr[2]);
-      node.a.lerp(node.b, sc.blend);
+      // Single hero layout — no per-section morph.
+      const arr = layout(i, nodes.length, spread);
+      node.a.set(arr[0], arr[1], arr[2]);
 
       if (reduced) {
         node.base.copy(node.a);
@@ -161,9 +163,7 @@ function ConstellationNodes({
         node.base.lerp(node.a, BASE_LERP);
       }
 
-      // Lissajous wobble adds life on top of the morphed base. Damp it during
-      // active morph so the transition reads as deliberate.
-      const wobbleScale = reduced ? 0 : 1 - sc.blend * 0.5;
+      const wobbleScale = reduced ? 0 : 1;
       const { ampX, ampY, ampZ, phaseX, phaseY, phaseZ, speed } = node.liss;
       const ox = Math.sin(t * speed + phaseX) * ampX * wobbleScale;
       const oy = Math.sin(t * speed * 1.3 + phaseY) * ampY * wobbleScale;
@@ -172,9 +172,8 @@ function ConstellationNodes({
       const baseY = node.base.y + oy;
       const baseZ = node.base.z + oz;
 
-      // Cursor gravity (unchanged).
       const target = tmp.current.set(0, 0, 0);
-      if (cursor.current.active && !reduced) {
+      if (cursor.current.active && !reduced && heroBlend > 0.5) {
         const dx = projected.current.x - baseX;
         const dy = projected.current.y - baseY;
         const dz = projected.current.z - baseZ;
@@ -189,6 +188,12 @@ function ConstellationNodes({
 
       mesh.position.set(baseX + off.x, baseY + off.y, baseZ + off.z);
       positionsRef.current[i].copy(mesh.position);
+
+      // Fade per-node opacity by heroBlend so the cloud disappears in
+      // section view, leaving the FlybyStar alone on stage.
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      mat.transparent = true;
+      mat.opacity = heroBlend;
     });
   });
 
@@ -257,7 +262,11 @@ function ConstellationLinks({
   const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
   useFrame(() => {
+    const sc = getScrollState().current;
+    const heroBlend =
+      sc.activeIndex === 0 ? 1 - sc.blend : 0;
     const cutoff = linkDistance;
+
     pairs.forEach(([i, j], k) => {
       const obj = lineRefs.current[k] as unknown as {
         geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
@@ -277,11 +286,9 @@ function ConstellationLinks({
       const dz = a.z - b.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (obj.material) {
-        // Linear falloff with a generous base so lines read clearly. Lines
-        // beyond the cutoff fade to 0; nearby lines stay close to full
-        // opacity so the constellation feels connected.
         const visible = Math.max(0, 1 - dist / cutoff);
-        obj.material.opacity = 0.55 * visible;
+        obj.material.transparent = true;
+        obj.material.opacity = 0.55 * visible * heroBlend;
       }
     });
   });
@@ -326,6 +333,52 @@ function PointerTracker({ cursor }: { cursor: React.MutableRefObject<CursorState
     };
   }, [gl, cursor]);
   return null;
+}
+
+function FlybyLayer() {
+  // Re-mount FlybyStars when active/next change; each FlybyStar reads its
+  // own DOM element + scroll state every frame, so this layer doesn't need
+  // to re-render per scroll frame.
+  const [indices, setIndices] = useState(() => {
+    const s = getScrollState().current;
+    return { active: s.activeIndex, next: s.nextIndex };
+  });
+
+  useEffect(() => {
+    return subscribeScrollState((s) => {
+      setIndices((prev) =>
+        prev.active === s.activeIndex && prev.next === s.nextIndex
+          ? prev
+          : { active: s.activeIndex, next: s.nextIndex },
+      );
+    });
+  }, []);
+
+  // active === 0 means hero — no flybys.
+  // Mount at most two stars: the active one (when not hero) and the next
+  // one whenever it differs and isn't hero.
+  const stars: Array<{ index: number; key: string }> = [];
+  if (indices.active >= 1) stars.push({ index: indices.active, key: `active-${indices.active}` });
+  if (indices.next !== indices.active && indices.next >= 1) {
+    stars.push({ index: indices.next, key: `next-${indices.next}` });
+  }
+
+  return (
+    <>
+      {stars.map(({ index, key }) => (
+        <FlybyStarSlot key={key} sectionIndex={index} />
+      ))}
+    </>
+  );
+}
+
+function FlybyStarSlot({ sectionIndex }: { sectionIndex: number }) {
+  const meta = LABS[sectionIndex];
+  if (!meta) return null;
+  // Opacity is constant 1; FlybyStar's progress-from-DOM naturally tapers
+  // off-screen at progress 0/1, so no extra fade needed. (We could later
+  // animate opacity here for explicit cross-fade between active and next.)
+  return <FlybyStar meta={meta} sectionIndex={sectionIndex} opacity={1} />;
 }
 
 function Scene() {
@@ -384,6 +437,7 @@ function Scene() {
         positionsRef={positionsRef}
         linkDistance={linkDistance}
       />
+      <FlybyLayer />
     </>
   );
 }
