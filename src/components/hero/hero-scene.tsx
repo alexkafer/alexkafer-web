@@ -16,6 +16,50 @@ import {
 } from "./section-stars";
 import { getAnchorWorldPos } from "./dom-anchor";
 
+// Hero scene — Three.js constellation behind the page.
+//
+// MOVING PARTS (in render order)
+// ------------------------------
+//   Starfield            — static background noise, 1500 distant points.
+//   ConstellationNodes   — the live stars. Each frame, every star lerps
+//                          its `base` toward a target which is:
+//                            lerp(rotated_parked, cloud, heroBlend)
+//                          plus per-star Lissajous wobble, plus an active
+//                          DOM-anchor override for the current section's
+//                          anchor star (see dom-anchor.ts).
+//   ConstellationLinks   — the original "hero" graph: pairs that are close
+//                          in the cloud layout. Lines persist across scroll
+//                          and fade by current distance vs a per-pair
+//                          cutoff (capped so parked stretching doesn't
+//                          turn into spiderweb tethers).
+//   SectionLinks         — section-colored highlight bundle for the active
+//                          section's neighbors (see section-stars.ts).
+//
+// SCROLL → MOTION PIPELINE
+// ------------------------
+// scroll-state.ts holds { activeIndex, nextIndex, progress, blend }.
+// constellation-background.tsx writes it from window.scroll using a
+// "second-half-of-section is morph" heuristic (`blend = 0` for the first
+// half, ramps 0→1 across the second half). Each frame this scene reads:
+//   heroBlend       = (activeIndex === 0) ? (1 - blend) : 0
+//   parkedRotation  = lerp(rotationFor(activeIndex), rotationFor(nextIndex),
+//                          blend), where rotationFor(s) = (s - 1) * step.
+// See section-layouts.ts and section-stars.ts for the geometry side.
+//
+// COMMON TWEAKS
+// -------------
+//   BASE_LERP        — how fast a star chases its scroll target. Higher =
+//                      snappier, lower = floatier. Only affects non-anchor
+//                      stars during morph.
+//   DAMPING          — how fast cursor-warp offsets relax. Higher = bouncier
+//                      cursor follow, lower = more lag.
+//   ACTIVE_SCALE     — size multiplier of the active anchored star.
+//   ACTIVE_EMISSIVE  — glow of the active star (vs BASE_EMISSIVE).
+//   STAR_COUNT       — backdrop point count. Purely cosmetic.
+//
+// To change WHERE stars start/end or the rotation cadence, tweak
+// section-layouts.ts (geometry) or the angularStep math here.
+
 const NODE_COLOR = "#7dd3fc";
 const NODE_COLOR_VEC = new THREE.Color(NODE_COLOR);
 const ACTIVE_SCALE = 1.4;
@@ -193,6 +237,21 @@ function ConstellationNodes({
     const cloudFn = LAYOUTS.cloud;
     const parkedFn = LAYOUTS.parked;
 
+    // Scroll-driven Z-rotation of the parked layout: bring the upcoming
+    // section's anchor star around to LEFT-CENTER (where its DOM heading
+    // sits) before that section scrolls into view. Section indices walk
+    // clockwise around the ring, so each step is a positive math-angle
+    // delta of -angularStep (i.e., rotate counter-clockwise to bring the
+    // next clockwise slot to LEFT). We negate to get the right sign for
+    // applyAxisAngle around +Z.
+    const sectionCount = Math.max(1, LABS.length - 1);
+    const angularStep = (Math.PI * 2) / sectionCount;
+    const rotationFor = (idx: number) =>
+      idx <= 0 ? 0 : (idx - 1) * angularStep;
+    const r0 = rotationFor(sc.activeIndex);
+    const r1 = rotationFor(sc.nextIndex);
+    const parkedRotation = r0 + (r1 - r0) * sc.blend;
+
     nodes.forEach((node, i) => {
       const mesh = refs.current[i];
       if (!mesh) return;
@@ -201,6 +260,16 @@ function ConstellationNodes({
       const pArr = parkedFn(i, nodes.length, spread);
       cloudTarget.current.set(cArr[0], cArr[1], cArr[2]);
       parkedTarget.current.set(pArr[0], pArr[1], pArr[2]);
+      // Rotate parked target around +Z so the active/next section anchor
+      // star drifts toward LEFT as we scroll between sections.
+      if (parkedRotation !== 0) {
+        const cosR = Math.cos(parkedRotation);
+        const sinR = Math.sin(parkedRotation);
+        const px = parkedTarget.current.x;
+        const py = parkedTarget.current.y;
+        parkedTarget.current.x = px * cosR - py * sinR;
+        parkedTarget.current.y = px * sinR + py * cosR;
+      }
       blendedTarget.current.copy(parkedTarget.current).lerp(cloudTarget.current, heroBlend);
 
       // Active section star: override base target with DOM anchor when present.
@@ -290,51 +359,68 @@ function ConstellationNodes({
 function ConstellationLinks({
   nodes,
   positionsRef,
+  spread,
   linkDistance,
+  assignment,
 }: {
   nodes: LiveNode[];
   positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+  spread: { x: number; y: number; z: number };
   linkDistance: number;
+  assignment: SectionAssignment;
 }) {
-  // Build a generous candidate pair list: pairs that are close enough in ANY
-  // of the layouts. Lines fade by current distance per frame so long lines
-  // disappear gracefully during morph.
+  // Pair list = the *original* hero constellation graph: pairs that are
+  // close in the cloud layout. We persist these across scroll and let the
+  // per-pair cutoff (informed by the parked layout) handle morph fade.
   const pairs = useMemo(() => {
-    const layouts = Object.values(LAYOUTS);
-    const synth = { x: 4, y: 3, z: 1 };
-    const pos: [number, number, number][][] = layouts.map((fn) =>
-      nodes.map((_, i) => fn(i, nodes.length, synth)),
-    );
-    const out: Array<[number, number]> = [];
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        for (let k = 0; k < layouts.length; k++) {
-          const a = pos[k][i];
-          const b = pos[k][j];
-          const dx = a[0] - b[0];
-          const dy = a[1] - b[1];
-          const dz = a[2] - b[2];
-          const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-          if (d < 1.4) {
-            out.push([i, j]);
-            break;
-          }
-        }
+    const total = nodes.length;
+    const cloudPos = nodes.map((_, i) => LAYOUTS.cloud(i, total, spread));
+    const parkedPos = nodes.map((_, i) => LAYOUTS.parked(i, total, spread));
+
+    // Cloud-graph threshold: ~90% of the smaller in-plane spread keeps the
+    // hero "constellation" feel without webbing every star to every other.
+    const cloudThresh = Math.min(spread.x, spread.y) * 0.9;
+
+    const dist = (
+      a: [number, number, number],
+      b: [number, number, number],
+    ) => {
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      const dz = a[2] - b[2];
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    };
+
+    const out: Array<{ i: number; j: number; cutoff: number }> = [];
+    for (let i = 0; i < total; i++) {
+      for (let j = i + 1; j < total; j++) {
+        const cloudDist = dist(cloudPos[i], cloudPos[j]);
+        if (cloudDist > cloudThresh) continue;
+
+        const parkedDist = dist(parkedPos[i], parkedPos[j]);
+        // Allow the cutoff to grow with parked distance so the line stays
+        // visible during morph, but cap growth at 2.5× cloudDist to avoid
+        // long "spiderweb" tethers across the parked ellipsoid.
+        const stretched = Math.min(parkedDist, cloudDist * 2.5);
+        const cutoff = Math.max(cloudDist, stretched) * 1.25;
+        out.push({ i, j, cutoff });
       }
     }
     return out;
-  }, [nodes]);
+  }, [nodes, spread]);
 
   const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
   const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
   useFrame(() => {
     const sc = getScrollState().current;
-    const heroBlend =
-      sc.activeIndex === 0 ? 1 - sc.blend : 0;
-    const cutoff = linkDistance;
+    const inSectionView = sc.activeIndex >= 1;
+    const activeStarIdx = inSectionView
+      ? assignment.sectionToStar.get(sc.activeIndex)
+      : undefined;
 
-    pairs.forEach(([i, j], k) => {
+    pairs.forEach((pair, k) => {
+      const { i, j, cutoff } = pair;
       const obj = lineRefs.current[k] as unknown as {
         geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
         material?: { opacity?: number; transparent?: boolean };
@@ -353,18 +439,31 @@ function ConstellationLinks({
       const dz = a.z - b.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (obj.material) {
-        const visible = Math.max(0, 1 - dist / cutoff);
+        // Full opacity until 0.7×cutoff, fade to 0 at cutoff.
+        const fade =
+          1 - THREE.MathUtils.smoothstep(dist, cutoff * 0.7, cutoff);
+        // Soft-suppress edges touching the active anchored star — the
+        // SectionLinks highlight already represents that star's neighbors,
+        // and the anchor pull can produce ugly tethers toward DOM labels.
+        const touchesActive =
+          activeStarIdx !== undefined &&
+          (i === activeStarIdx || j === activeStarIdx);
+        const attenuation = touchesActive ? 0.2 : 1;
         obj.material.transparent = true;
-        obj.material.opacity = 0.55 * visible * heroBlend;
+        obj.material.opacity = 0.55 * fade * attenuation;
       }
     });
   });
 
+  // Suppress the unused-prop warning while keeping the prop in the public
+  // shape (it informs cutoff sizing via spread already).
+  void linkDistance;
+
   return (
     <group>
-      {pairs.map(([i, j], k) => (
+      {pairs.map((pair, k) => (
         <Line
-          key={`${i}-${j}`}
+          key={`${pair.i}-${pair.j}`}
           ref={(el) => {
             lineRefs.current[k] = el as unknown as THREE.Object3D | null;
           }}
@@ -548,7 +647,9 @@ function Scene() {
       <ConstellationLinks
         nodes={nodes}
         positionsRef={positionsRef}
+        spread={spread}
         linkDistance={linkDistance}
+        assignment={assignment}
       />
       <SectionLinks
         positionsRef={positionsRef}

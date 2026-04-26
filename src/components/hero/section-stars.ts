@@ -1,11 +1,47 @@
-// Maps section indices (1..LABS.length-1) to indices in the constellation
-// node array. Picks well-spread nodes so the line bundles look balanced.
+// Section anchor assignment + neighbor pairs.
 //
-// Also exposes computeNeighborPairs() which returns each section's 2–3
-// nearest section-star siblings (for line bundles).
+// HOW SECTIONS GET A STAR
+// -----------------------
+// Every section in the manifest (LABS, minus the hero at index 0) needs one
+// "anchor" star — the star that physically migrates to that section's
+// heading when the user scrolls there.
+//
+// Anchors are picked by *angular slot*, not by position:
+//   1. Compute each candidate star's `cloudAngle(i, total)`.
+//   2. Section 1 owns the star whose angle is nearest LEFT_ANGLE (π,
+//      i.e., 9 o'clock — where the heading text sits).
+//   3. Section 2 takes the nearest unclaimed star to (LEFT_ANGLE - step),
+//      where step = 2π / sectionCount. Each subsequent section walks
+//      clockwise (math angle decreases ⇒ visually clockwise on a y-up
+//      canvas).
+//   4. Continue until every section has one anchor.
+//
+// HOW THE CONSTELLATION KEEPS HEADINGS ON THE LEFT
+// ------------------------------------------------
+// hero-scene.tsx applies a scroll-driven rotation to the parked layout
+// (see `parkedRotation` in ConstellationNodes.useFrame). For active section
+// `s`, the rotation is `(s - 1) * angularStep`, which brings that section's
+// natural slot back to LEFT. Between sections, rotation lerps with `blend`,
+// so the next anchor is already near LEFT by the time its heading scrolls
+// in. Because the rotation is uniform, all parked distances (and therefore
+// `computeNeighborPairs` results) are unchanged.
+//
+// ADDING / REMOVING SECTIONS
+// --------------------------
+// Just add/remove an entry in `LABS` (src/labs/manifest.ts). `sectionCount`
+// and `angularStep` re-derive automatically here AND in hero-scene.tsx, so
+// the ring re-spaces evenly. The first non-hero entry will sit at LEFT.
+//
+// COMMON TWEAKS
+// -------------
+//   LEFT_ANGLE             — anchor "rest" position. π = left, π/2 = top,
+//                            0 = right, -π/2 = bottom.
+//   NEIGHBORS_PER_SECTION  — how many sibling section-anchors each
+//                            section's highlight bundle connects to (used
+//                            by SectionLinks in hero-scene.tsx).
 
 import * as THREE from "three";
-import { LAYOUTS } from "./section-layouts";
+import { LAYOUTS, cloudAngle } from "./section-layouts";
 import { LABS } from "@/labs";
 
 export type SectionAssignment = {
@@ -16,55 +52,60 @@ export type SectionAssignment = {
 };
 
 const NEIGHBORS_PER_SECTION = 3;
+// Section 1 parks at LEFT-CENTER (angle π in math convention). Subsequent
+// sections walk clockwise (decreasing math angle) by `angularStep`.
+const LEFT_ANGLE = Math.PI;
 
-// Greedy farthest-point sampling: pick 9 nodes that are maximally spread in
-// parked space. Stable per (nodeCount, spread shape) — does not depend on
-// runtime randomness because LAYOUTS.parked is deterministic.
+function angleDelta(a: number, b: number) {
+  let d = a - b;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return Math.abs(d);
+}
+
 export function assignSectionStars(
   nodeCount: number,
-  spread: { x: number; y: number; z: number },
+  // Spread is unused now that assignment is purely angular, but kept in the
+  // signature so callers don't have to change.
+  _spread: { x: number; y: number; z: number },
 ): SectionAssignment {
+  void _spread;
   const sectionCount = LABS.length - 1; // exclude hero
-  const positions: THREE.Vector3[] = [];
-  for (let i = 0; i < nodeCount; i++) {
-    const [x, y, z] = LAYOUTS.parked(i, nodeCount, spread);
-    positions.push(new THREE.Vector3(x, y, z));
-  }
+  const angularStep = (Math.PI * 2) / sectionCount;
 
-  const chosen: number[] = [];
-  // Start with node 0 for determinism.
-  chosen.push(0);
-  while (chosen.length < sectionCount && chosen.length < nodeCount) {
-    let bestIdx = -1;
-    let bestMinDist = -1;
-    for (let i = 0; i < nodeCount; i++) {
-      if (chosen.includes(i)) continue;
-      let minDist = Infinity;
-      for (const c of chosen) {
-        const d = positions[i].distanceTo(positions[c]);
-        if (d < minDist) minDist = d;
-      }
-      if (minDist > bestMinDist) {
-        bestMinDist = minDist;
-        bestIdx = i;
-      }
-    }
-    if (bestIdx === -1) break;
-    chosen.push(bestIdx);
+  const angles: Array<{ idx: number; angle: number }> = [];
+  for (let i = 0; i < nodeCount; i++) {
+    angles.push({ idx: i, angle: cloudAngle(i, nodeCount) });
   }
 
   const sectionToStar = new Map<number, number>();
   const starToSection = new Map<number, number>();
-  for (let s = 0; s < chosen.length; s++) {
-    // sectionIndex 1..N maps to chosen[0..N-1]
-    sectionToStar.set(s + 1, chosen[s]);
-    starToSection.set(chosen[s], s + 1);
+  const taken = new Set<number>();
+  for (let s = 0; s < sectionCount; s++) {
+    // Clockwise from LEFT (math angle decreases visually clockwise on a
+    // y-up canvas).
+    const desired = LEFT_ANGLE - s * angularStep;
+    let bestIdx = -1;
+    let bestDelta = Infinity;
+    for (const { idx, angle } of angles) {
+      if (taken.has(idx)) continue;
+      const d = angleDelta(angle, desired);
+      if (d < bestDelta) {
+        bestDelta = d;
+        bestIdx = idx;
+      }
+    }
+    if (bestIdx === -1) break;
+    taken.add(bestIdx);
+    sectionToStar.set(s + 1, bestIdx);
+    starToSection.set(bestIdx, s + 1);
   }
   return { sectionToStar, starToSection };
 }
 
 // For each section, find its 2-3 nearest OTHER section-stars in parked
-// space. Returns a Map<sectionIndex, neighborStarIndices[]>.
+// space. Returns a Map<sectionIndex, neighborStarIndices[]>. Distances are
+// preserved under the runtime Z-rotation, so this can be computed once.
 export function computeNeighborPairs(
   assignment: SectionAssignment,
   nodeCount: number,
