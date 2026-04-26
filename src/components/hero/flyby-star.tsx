@@ -50,7 +50,8 @@ export function FlybyStar({ meta, sectionIndex, opacity }: Props) {
       { length: TRAIL_LENGTH },
       () => new THREE.Vector3(),
     );
-    return { positions, colors, history, segments };
+    const primed = { value: false };
+    return { positions, colors, history, segments, primed };
   }, []);
 
   const geom = useMemo(() => {
@@ -60,11 +61,13 @@ export function FlybyStar({ meta, sectionIndex, opacity }: Props) {
     return g;
   }, [trail]);
 
-  // Reset history on mount / when key props change so the trail doesn't snap
-  // from the previous lab's tail.
+  // Re-prime on mount / when key props change so the trail doesn't snap
+  // from the previous lab's tail. The actual fill happens on the first
+  // useFrame using the computed head position (avoids drawing a streak
+  // from off-screen-bottom to mid-viewport when the star mounts mid-section).
   useEffect(() => {
-    trail.history.forEach((v) => v.set(0, -halfH * 2, 0));
-  }, [meta.slug, halfH, trail]);
+    trail.primed.value = false;
+  }, [meta.slug, trail]);
 
   const baseColor = useMemo(() => labColor(meta), [meta]);
 
@@ -118,6 +121,14 @@ export function FlybyStar({ meta, sectionIndex, opacity }: Props) {
     mat.emissiveIntensity = 0.9;
     mat.opacity = opacity;
     mat.transparent = true;
+
+    // Lazy-prime: fill all history slots with the first real head position so
+    // the trail starts as a single point at the head rather than streaking
+    // from a stale reset value.
+    if (!trail.primed.value) {
+      for (const v of trail.history) v.set(x, y, z);
+      trail.primed.value = true;
+    }
 
     // Update trail history (push head, drop tail).
     for (let i = trail.history.length - 1; i > 0; i--) {
