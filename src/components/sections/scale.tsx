@@ -40,7 +40,7 @@ export function ScaleSection() {
     <Section id="scale" aria-label="Scale">
       <SectionInner>
         <div className="relative">
-          <div className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
+          <div id="scale-marker" className="font-mono text-xs uppercase tracking-[0.3em] text-amber">
             {"// 03 · SCALE"}
           </div>
           <h2 className="mt-6 max-w-4xl font-sans text-5xl font-bold tracking-tight text-mute-100 md:text-6xl lg:text-7xl">

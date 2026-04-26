@@ -1,9 +1,13 @@
-// Per-section layouts for the page-spanning constellation.
+// Constellation layouts.
 //
-// A LayoutFn returns the *target world position* for a node in that layout,
-// scaled to the current viewport spread. The scene blends between the active
-// section's layout and the next as the user scrolls, so the constellation
-// appears to reframe each section.
+// Two layouts only:
+//   cloud  — the hero state (tight wobbling cloud near origin).
+//   parked — the post-hero state (sparse 3-D ellipsoid filling the viewport
+//            with real depth). The active section's star then peels off the
+//            parked target each frame and DOM-anchors to its // NN label.
+//
+// `personality(i, total)` is a stable per-node RNG so each node has a
+// consistent identity across layouts.
 
 export type LayoutFn = (
   i: number,
@@ -19,8 +23,6 @@ function lcg(seed: number) {
   };
 }
 
-// Stable per-node "personality" — node 7 is always the slightly-higher one in
-// the band, etc. Keeps identity consistent across layouts.
 function personality(i: number, total: number) {
   const rand = lcg(7919 + i * 131 + total);
   return { a: rand(), b: rand(), c: rand(), d: rand() };
@@ -37,142 +39,37 @@ const cloud: LayoutFn = (i, total, spread) => {
   ];
 };
 
-const frameRight: LayoutFn = (i, total, spread) => {
+// Sparse 3-D ellipsoid using golden-angle spiral on a flattened sphere.
+// X spread ~1.6×, Y spread ~1.4×, Z spread ~3.5× the cloud spread so we get
+// real depth and stars feel "exploded out" rather than a tight ring.
+const PARKED_X = 1.6;
+const PARKED_Y = 1.4;
+const PARKED_Z = 3.5;
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+
+const parked: LayoutFn = (i, total, spread) => {
   const p = personality(i, total);
+  // Golden-angle spiral on a unit sphere → uniform-ish coverage.
   const t = (i + 0.5) / total;
+  const phi = Math.acos(1 - 2 * t);          // 0..π
+  const theta = GOLDEN * i;                  // azimuth
+  const sx = Math.sin(phi) * Math.cos(theta);
+  const sy = Math.sin(phi) * Math.sin(theta);
+  const sz = Math.cos(phi);
+  // Per-node jitter so it doesn't read as a perfect spiral.
+  const jx = (p.a * 2 - 1) * 0.12;
+  const jy = (p.b * 2 - 1) * 0.12;
+  const jz = (p.d * 2 - 1) * 0.18;
   return [
-    spread.x * (0.55 + p.a * 0.45),
-    (t * 2 - 1) * spread.y * 0.95,
-    (p.c * 2 - 1) * spread.z * 0.6,
-  ];
-};
-
-const corners: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const corner = i % 4;
-  const sx = corner === 0 || corner === 2 ? -1 : 1;
-  const sy = corner < 2 ? 1 : -1;
-  const cx = sx * spread.x * 0.78;
-  const cy = sy * spread.y * 0.7;
-  const j = 0.3;
-  return [
-    cx + (p.a * 2 - 1) * spread.x * j,
-    cy + (p.b * 2 - 1) * spread.y * j,
-    (p.c * 2 - 1) * spread.z,
-  ];
-};
-
-const sweep: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const t = (i + 0.5) / total;
-  const x = (t * 2 - 1) * spread.x * 0.95;
-  const band = i % 2 === 0 ? spread.y * 0.55 : -spread.y * 0.55;
-  const yJ = (p.a * 2 - 1) * spread.y * 0.18;
-  return [x, band + yJ, (p.c * 2 - 1) * spread.z * 0.5];
-};
-
-const ring: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const angle = (i / total) * Math.PI * 2;
-  const r = Math.min(spread.x, spread.y) * (0.85 + p.a * 0.1);
-  return [
-    Math.cos(angle) * r,
-    Math.sin(angle) * r,
-    (p.c * 2 - 1) * spread.z * 0.4,
-  ];
-};
-
-const curve: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const t = (i + 0.5) / total;
-  const x = (t * 2 - 1) * spread.x * 0.95;
-  const eased = Math.pow(1 - t, 2);
-  const y = (eased * 2 - 1) * spread.y * 0.7 + (p.a * 2 - 1) * spread.y * 0.08;
-  return [x, y, (p.c * 2 - 1) * spread.z * 0.5];
-};
-
-const grid4: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const col = i % 4;
-  const cx = (col / 3) * spread.x * 1.6 - spread.x * 0.8;
-  const cy = (p.a * 2 - 1) * spread.y * 0.85;
-  return [
-    cx + (p.b * 2 - 1) * spread.x * 0.08,
-    cy,
-    (p.c * 2 - 1) * spread.z * 0.5,
-  ];
-};
-
-const wide: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const angle = (i / total) * Math.PI * 2 + p.a * 0.4;
-  const r = 0.95 + p.b * 0.2;
-  return [
-    Math.cos(angle) * r * spread.x,
-    Math.sin(angle) * r * spread.y,
-    (p.c * 2 - 1) * spread.z * 1.2,
-  ];
-};
-
-const triCluster: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const col = i % 3;
-  const cx = (col - 1) * spread.x * 0.7;
-  const cy = (p.a * 2 - 1) * spread.y * 0.85;
-  return [
-    cx + (p.b * 2 - 1) * spread.x * 0.1,
-    cy,
-    (p.c * 2 - 1) * spread.z * 0.5,
-  ];
-};
-
-const dualColumn: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  const side = i % 2 === 0 ? -1 : 1;
-  const cx = side * spread.x * 0.7;
-  const cy = (p.a * 2 - 1) * spread.y * 0.9;
-  return [
-    cx + (p.b * 2 - 1) * spread.x * 0.06,
-    cy,
-    (p.c * 2 - 1) * spread.z * 0.5,
-  ];
-};
-
-// Replaces the old SVG x-ray overlay on the disguise section: nodes scatter
-// across the full frame so the constellation lines themselves become the
-// "x-ray" pattern.
-const xray: LayoutFn = (i, total, spread) => {
-  const p = personality(i, total);
-  return [
-    (p.a * 2 - 1) * spread.x * 0.95,
-    (p.b * 2 - 1) * spread.y * 0.9,
-    (p.c * 2 - 1) * spread.z * 0.6,
+    (sx + jx) * spread.x * PARKED_X,
+    (sy + jy) * spread.y * PARKED_Y,
+    (sz + jz) * spread.z * PARKED_Z,
   ];
 };
 
 export const LAYOUTS = {
-  cloud, frameRight, corners, sweep, ring, curve, grid4, wide, triCluster, dualColumn, xray,
+  cloud,
+  parked,
 } as const;
 
 export type LayoutId = keyof typeof LAYOUTS;
-
-export type SectionEntry = {
-  id: string;
-  label: string;
-  version: string;
-  layout: LayoutId;
-};
-
-// Order matches the page composition in app/page.tsx.
-export const SECTIONS: SectionEntry[] = [
-  { id: "hero",        label: "IDENTIFIED CONTACT", version: "v0.0", layout: "cloud" },
-  { id: "disguise",    label: "THE DISGUISE",       version: "v0.2", layout: "xray" },
-  { id: "scale",       label: "SCALE",              version: "v0.3", layout: "corners" },
-  { id: "velocity",    label: "VELOCITY",           version: "v0.4", layout: "sweep" },
-  { id: "reliability", label: "RELIABILITY",        version: "v0.5", layout: "ring" },
-  { id: "efficiency",  label: "EFFICIENCY",         version: "v0.6", layout: "curve" },
-  { id: "reach",       label: "REACH",              version: "v0.7", layout: "grid4" },
-  { id: "origin",      label: "ORIGIN",             version: "v0.8", layout: "wide" },
-  { id: "principles",  label: "PRINCIPLES",         version: "v0.9", layout: "triCluster" },
-  { id: "lab",         label: "EXPERIMENT",         version: "v1.0", layout: "dualColumn" },
-];

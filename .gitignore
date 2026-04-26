@@ -50,3 +50,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .worktrees/
+
+# verification screenshots
+.flyby-verify/
+
+# playwright-cli runtime artifacts
+.playwright-cli/

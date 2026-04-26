@@ -5,10 +5,22 @@ import { Line } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { HERO_DEFAULT_NODE_COUNT } from "./use-hero-nodes";
-import { LAYOUTS, SECTIONS, type LayoutFn } from "./section-layouts";
+import { LAYOUTS } from "./section-layouts";
 import { getScrollState } from "./scroll-state";
+import { LABS } from "@/labs";
+import { labColor } from "./lab-color";
+import {
+  assignSectionStars,
+  computeNeighborPairs,
+  type SectionAssignment,
+} from "./section-stars";
+import { getAnchorWorldPos } from "./dom-anchor";
 
 const NODE_COLOR = "#7dd3fc";
+const NODE_COLOR_VEC = new THREE.Color(NODE_COLOR);
+const ACTIVE_SCALE = 1.4;
+const ACTIVE_EMISSIVE = 1.0;
+const BASE_EMISSIVE = 0.6;
 const STAR_COUNT = 1500;
 const STAR_RADIUS = 30;
 const DAMPING = 0.05;
@@ -93,6 +105,23 @@ function makeLiveNodes(count: number, ampScale: number, ampZ: number): LiveNode[
   return out;
 }
 
+function makeNodeColors(
+  nodeCount: number,
+  assignment: SectionAssignment,
+): THREE.Color[] {
+  const out: THREE.Color[] = [];
+  for (let i = 0; i < nodeCount; i++) {
+    const sectionIdx = assignment.starToSection.get(i);
+    if (sectionIdx !== undefined) {
+      const meta = LABS[sectionIdx];
+      out.push(meta ? labColor(meta) : NODE_COLOR_VEC.clone());
+    } else {
+      out.push(NODE_COLOR_VEC.clone());
+    }
+  }
+  return out;
+}
+
 function ConstellationNodes({
   nodes,
   cursor,
@@ -102,6 +131,8 @@ function ConstellationNodes({
   cursorStrength,
   positionsRef,
   reduced,
+  assignment,
+  parkedColors,
 }: {
   nodes: LiveNode[];
   cursor: React.MutableRefObject<CursorState>;
@@ -111,12 +142,19 @@ function ConstellationNodes({
   cursorStrength: number;
   positionsRef: React.MutableRefObject<THREE.Vector3[]>;
   reduced: boolean;
+  assignment: SectionAssignment;
+  parkedColors: THREE.Color[];
 }) {
   const refs = useRef<(THREE.Mesh | null)[]>([]);
   const offsets = useRef<THREE.Vector3[]>(nodes.map(() => new THREE.Vector3()));
   const projected = useRef(new THREE.Vector3());
+  const dirTmp = useRef(new THREE.Vector3());
   const tmp = useRef(new THREE.Vector3());
-  const { camera } = useThree();
+  const colorTmp = useRef(new THREE.Color());
+  const cloudTarget = useRef(new THREE.Vector3());
+  const parkedTarget = useRef(new THREE.Vector3());
+  const blendedTarget = useRef(new THREE.Vector3());
+  const { camera, gl } = useThree();
 
   // Initialize each node's base to its hero/cloud layout so the first frame
   // doesn't snap from the origin.
@@ -131,29 +169,47 @@ function ConstellationNodes({
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     const sc = getScrollState().current;
-    const active = SECTIONS[sc.activeIndex] ?? SECTIONS[0];
-    const next = SECTIONS[sc.nextIndex] ?? active;
-    const layoutA: LayoutFn = LAYOUTS[active.layout];
-    const layoutB: LayoutFn = LAYOUTS[next.layout];
+
+    // 1 in pure hero, 0 throughout section view.
+    const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
+    const inSectionView = sc.activeIndex >= 1;
+    const activeStarIdx = inSectionView
+      ? assignment.sectionToStar.get(sc.activeIndex)
+      : undefined;
+    const activeMeta = inSectionView ? LABS[sc.activeIndex] : undefined;
+    const activeAnchorPos =
+      inSectionView && activeMeta
+        ? getAnchorWorldPos(activeMeta.slug, camera, gl.domElement)
+        : null;
 
     if (cursor.current.active) {
       projected.current.set(cursor.current.x, cursor.current.y, 0.5);
       projected.current.unproject(camera);
-      const dir = projected.current.sub(camera.position).normalize();
-      const distance = -camera.position.z / dir.z;
-      projected.current.copy(camera.position).add(dir.multiplyScalar(distance));
+      dirTmp.current.copy(projected.current).sub(camera.position).normalize();
+      const distance = -camera.position.z / dirTmp.current.z;
+      projected.current.copy(camera.position).add(dirTmp.current.multiplyScalar(distance));
     }
+
+    const cloudFn = LAYOUTS.cloud;
+    const parkedFn = LAYOUTS.parked;
 
     nodes.forEach((node, i) => {
       const mesh = refs.current[i];
       if (!mesh) return;
 
-      // Blend the two section layouts to find this frame's target base.
-      const aArr = layoutA(i, nodes.length, spread);
-      const bArr = layoutB(i, nodes.length, spread);
-      node.a.set(aArr[0], aArr[1], aArr[2]);
-      node.b.set(bArr[0], bArr[1], bArr[2]);
-      node.a.lerp(node.b, sc.blend);
+      const cArr = cloudFn(i, nodes.length, spread);
+      const pArr = parkedFn(i, nodes.length, spread);
+      cloudTarget.current.set(cArr[0], cArr[1], cArr[2]);
+      parkedTarget.current.set(pArr[0], pArr[1], pArr[2]);
+      blendedTarget.current.copy(parkedTarget.current).lerp(cloudTarget.current, heroBlend);
+
+      // Active section star: override base target with DOM anchor when present.
+      const isActiveStar = i === activeStarIdx;
+      if (isActiveStar && activeAnchorPos) {
+        node.a.copy(activeAnchorPos);
+      } else {
+        node.a.copy(blendedTarget.current);
+      }
 
       if (reduced) {
         node.base.copy(node.a);
@@ -161,20 +217,19 @@ function ConstellationNodes({
         node.base.lerp(node.a, BASE_LERP);
       }
 
-      // Lissajous wobble adds life on top of the morphed base. Damp it during
-      // active morph so the transition reads as deliberate.
-      const wobbleScale = reduced ? 0 : 1 - sc.blend * 0.5;
+      const wobbleScale = reduced ? 0 : 1;
       const { ampX, ampY, ampZ, phaseX, phaseY, phaseZ, speed } = node.liss;
       const ox = Math.sin(t * speed + phaseX) * ampX * wobbleScale;
       const oy = Math.sin(t * speed * 1.3 + phaseY) * ampY * wobbleScale;
       const oz = Math.sin(t * speed * 0.9 + phaseZ) * ampZ * wobbleScale;
-      const baseX = node.base.x + ox;
-      const baseY = node.base.y + oy;
-      const baseZ = node.base.z + oz;
+      // Active star wobbles less so it sits cleanly beside the marker.
+      const wobbleAtten = isActiveStar && activeAnchorPos ? 0.15 : 1;
+      const baseX = node.base.x + ox * wobbleAtten;
+      const baseY = node.base.y + oy * wobbleAtten;
+      const baseZ = node.base.z + oz * wobbleAtten;
 
-      // Cursor gravity (unchanged).
       const target = tmp.current.set(0, 0, 0);
-      if (cursor.current.active && !reduced) {
+      if (cursor.current.active && !reduced && heroBlend > 0.5) {
         const dx = projected.current.x - baseX;
         const dy = projected.current.y - baseY;
         const dz = projected.current.z - baseZ;
@@ -189,6 +244,23 @@ function ConstellationNodes({
 
       mesh.position.set(baseX + off.x, baseY + off.y, baseZ + off.z);
       positionsRef.current[i].copy(mesh.position);
+
+      // Scale: active star bigger.
+      const targetScale = isActiveStar && activeAnchorPos ? ACTIVE_SCALE : 1;
+      mesh.scale.lerp(
+        tmp.current.set(targetScale, targetScale, targetScale),
+        0.15,
+      );
+
+      // Color: blend cloud color → parked color by (1 - heroBlend).
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      colorTmp.current.copy(NODE_COLOR_VEC).lerp(parkedColors[i], 1 - heroBlend);
+      mat.color.copy(colorTmp.current);
+      mat.emissive.copy(colorTmp.current);
+      mat.emissiveIntensity =
+        isActiveStar && activeAnchorPos ? ACTIVE_EMISSIVE : BASE_EMISSIVE;
+      mat.transparent = true;
+      mat.opacity = 1;
     });
   });
 
@@ -205,7 +277,7 @@ function ConstellationNodes({
           <meshStandardMaterial
             color={NODE_COLOR}
             emissive={NODE_COLOR}
-            emissiveIntensity={0.6}
+            emissiveIntensity={BASE_EMISSIVE}
             roughness={0.4}
             metalness={0.1}
           />
@@ -257,7 +329,11 @@ function ConstellationLinks({
   const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
   useFrame(() => {
+    const sc = getScrollState().current;
+    const heroBlend =
+      sc.activeIndex === 0 ? 1 - sc.blend : 0;
     const cutoff = linkDistance;
+
     pairs.forEach(([i, j], k) => {
       const obj = lineRefs.current[k] as unknown as {
         geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
@@ -277,11 +353,9 @@ function ConstellationLinks({
       const dz = a.z - b.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (obj.material) {
-        // Linear falloff with a generous base so lines read clearly. Lines
-        // beyond the cutoff fade to 0; nearby lines stay close to full
-        // opacity so the constellation feels connected.
         const visible = Math.max(0, 1 - dist / cutoff);
-        obj.material.opacity = 0.55 * visible;
+        obj.material.transparent = true;
+        obj.material.opacity = 0.55 * visible * heroBlend;
       }
     });
   });
@@ -299,6 +373,76 @@ function ConstellationLinks({
           opacity={0.55}
           transparent
           lineWidth={1.4}
+        />
+      ))}
+    </group>
+  );
+}
+
+function SectionLinks({
+  positionsRef,
+  assignment,
+  neighborPairs,
+  parkedColors,
+}: {
+  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+  assignment: SectionAssignment;
+  neighborPairs: Map<number, number[]>;
+  parkedColors: THREE.Color[];
+}) {
+  // Pre-allocate one Line per (section, neighbor) pair. We only render the
+  // active section's lines by toggling opacity each frame.
+  const allPairs: Array<{ section: number; from: number; to: number }> = [];
+  for (const [sectionIdx, neighbors] of Array.from(neighborPairs)) {
+    const fromIdx = assignment.sectionToStar.get(sectionIdx);
+    if (fromIdx === undefined) continue;
+    for (const toIdx of neighbors) {
+      allPairs.push({ section: sectionIdx, from: fromIdx, to: toIdx });
+    }
+  }
+
+  const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
+  const segBuffer = useRef<Float32Array>(new Float32Array(6));
+
+  useFrame(() => {
+    const sc = getScrollState().current;
+    const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
+    const sectionFade = 1 - heroBlend; // 0 in hero, 1 in section view
+
+    allPairs.forEach((pair, k) => {
+      const obj = lineRefs.current[k] as unknown as {
+        geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
+        material?: { opacity?: number; transparent?: boolean };
+      } | null;
+      if (!obj?.geometry?.setPositions) return;
+      const a = positionsRef.current[pair.from];
+      const b = positionsRef.current[pair.to];
+      if (!a || !b) return;
+      const buf = segBuffer.current;
+      buf[0] = a.x; buf[1] = a.y; buf[2] = a.z;
+      buf[3] = b.x; buf[4] = b.y; buf[5] = b.z;
+      obj.geometry.setPositions(buf);
+      if (obj.material) {
+        const isActive = pair.section === sc.activeIndex;
+        obj.material.transparent = true;
+        obj.material.opacity = isActive ? 0.45 * sectionFade : 0;
+      }
+    });
+  });
+
+  return (
+    <group>
+      {allPairs.map((pair, k) => (
+        <Line
+          key={`${pair.section}-${pair.from}-${pair.to}`}
+          ref={(el) => {
+            lineRefs.current[k] = el as unknown as THREE.Object3D | null;
+          }}
+          points={[[0, 0, 0], [0, 0, 0]]}
+          color={parkedColors[pair.from]}
+          opacity={0}
+          transparent
+          lineWidth={1.2}
         />
       ))}
     </group>
@@ -347,6 +491,26 @@ function Scene() {
     [nodeCount, ampScale, spreadZ],
   );
 
+  const spread = useMemo(
+    () => ({ x: spreadX, y: spreadY, z: spreadZ }),
+    [spreadX, spreadY, spreadZ],
+  );
+
+  const assignment = useMemo(
+    () => assignSectionStars(nodeCount, spread),
+    [nodeCount, spread],
+  );
+
+  const neighborPairs = useMemo(
+    () => computeNeighborPairs(assignment, nodeCount, spread),
+    [assignment, nodeCount, spread],
+  );
+
+  const parkedColors = useMemo(
+    () => makeNodeColors(nodeCount, assignment),
+    [nodeCount, assignment],
+  );
+
   const nodeSize = Math.max(0.06, minDim * 0.025);
   const linkDistance = minDim * 0.9;
   const cursorRadius = minDim * 0.55;
@@ -372,17 +536,25 @@ function Scene() {
       <ConstellationNodes
         nodes={nodes}
         cursor={cursor}
-        spread={{ x: spreadX, y: spreadY, z: spreadZ }}
+        spread={spread}
         nodeSize={nodeSize}
         cursorRadius={cursorRadius}
         cursorStrength={cursorStrength}
         positionsRef={positionsRef}
         reduced={reduced}
+        assignment={assignment}
+        parkedColors={parkedColors}
       />
       <ConstellationLinks
         nodes={nodes}
         positionsRef={positionsRef}
         linkDistance={linkDistance}
+      />
+      <SectionLinks
+        positionsRef={positionsRef}
+        assignment={assignment}
+        neighborPairs={neighborPairs}
+        parkedColors={parkedColors}
       />
     </>
   );

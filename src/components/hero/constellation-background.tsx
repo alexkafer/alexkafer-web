@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
-import { SECTIONS } from "./section-layouts";
+import { LABS } from "@/labs";
 import { setScrollState } from "./scroll-state";
 
 const HeroScene = dynamic(() => import("./hero-scene"), { ssr: false });
@@ -18,7 +18,7 @@ function ScrollDriver() {
 
     const computeAndSet = () => {
       ticking = false;
-      const elements = SECTIONS.map((s) => document.getElementById(s.id));
+      const elements = LABS.map((s) => document.getElementById(s.slug));
       const vh = window.innerHeight;
       const center = window.scrollY + vh / 2;
 
@@ -59,7 +59,7 @@ function ScrollDriver() {
       }
 
       progress = Math.min(1, Math.max(0, progress));
-      const nextIndex = Math.min(SECTIONS.length - 1, activeIndex + 1);
+      const nextIndex = Math.min(LABS.length - 1, activeIndex + 1);
       // Hold the section's layout for the first half, then morph toward the
       // next layout in the second half. This gives each section a settled
       // "framed" beat before the constellation reorganizes.
