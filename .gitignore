@@ -53,3 +53,6 @@ next-env.d.ts
 
 # verification screenshots
 .flyby-verify/
+
+# playwright-cli runtime artifacts
+.playwright-cli/
