@@ -21,6 +21,8 @@ function ScrollDriver() {
       const elements = SECTIONS.map((s) => document.getElementById(s.id));
       const vh = window.innerHeight;
       const center = window.scrollY + vh / 2;
+      const viewportTop = window.scrollY;
+      const viewportBottom = window.scrollY + vh;
 
       let activeIndex = 0;
       let progress = 0;
@@ -39,8 +41,6 @@ function ScrollDriver() {
           break;
         }
         if (center < top) {
-          // Above this section -> we belong to the previous one (or this if
-          // it's the first).
           activeIndex = Math.max(0, i - 1);
           const cur = elements[activeIndex];
           if (cur) {
@@ -60,12 +60,22 @@ function ScrollDriver() {
 
       progress = Math.min(1, Math.max(0, progress));
       const nextIndex = Math.min(SECTIONS.length - 1, activeIndex + 1);
-      // Hold the section's layout for the first half, then morph toward the
-      // next layout in the second half. This gives each section a settled
-      // "framed" beat before the constellation reorganizes.
       const blend = progress < 0.5 ? 0 : (progress - 0.5) * 2;
 
-      setScrollState({ activeIndex, nextIndex, progress, blend });
+      // sectionProgress: 0 when section top crosses viewport bottom,
+      // 1 when section bottom crosses viewport top. Total travel = section
+      // height + viewport height.
+      const activeEl = elements[activeIndex];
+      let sectionProgress = 0;
+      if (activeEl) {
+        const top = activeEl.offsetTop;
+        const height = activeEl.offsetHeight;
+        const travel = height + vh;
+        const traveled = viewportBottom - top;
+        sectionProgress = Math.min(1, Math.max(0, traveled / Math.max(travel, 1)));
+      }
+
+      setScrollState({ activeIndex, nextIndex, progress, blend, sectionProgress });
     };
 
     const onScroll = () => {
