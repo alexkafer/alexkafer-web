@@ -9,27 +9,12 @@ import { useEffect, useState } from "react";
 export type ScrollState = {
   activeIndex: number;
   nextIndex: number;
-  /** 0..1 within the section under the viewport center (legacy). */
-  progress: number;
-  /** 0..1 — interpolation toward nextIndex's layout (legacy). */
-  blend: number;
-  /**
-   * 0..1 across the active section's *full* scroll range:
-   * 0 when the section's top is at the viewport bottom,
-   * 1 when the section's bottom is at the viewport top.
-   * Used by FlybyStar to drive its enter→exit animation.
-   */
-  sectionProgress: number;
+  progress: number; // 0..1 within the active section
+  blend: number;    // 0..1 — interpolation toward nextIndex's layout
 };
 
 const state: { current: ScrollState } = {
-  current: {
-    activeIndex: 0,
-    nextIndex: 0,
-    progress: 0,
-    blend: 0,
-    sectionProgress: 0,
-  },
+  current: { activeIndex: 0, nextIndex: 0, progress: 0, blend: 0 },
 };
 
 const listeners = new Set<(s: ScrollState) => void>();
@@ -45,8 +30,7 @@ export function setScrollState(next: Partial<ScrollState>) {
     merged.activeIndex === prev.activeIndex &&
     merged.nextIndex === prev.nextIndex &&
     Math.abs(merged.progress - prev.progress) < 0.001 &&
-    Math.abs(merged.blend - prev.blend) < 0.001 &&
-    Math.abs(merged.sectionProgress - prev.sectionProgress) < 0.001
+    Math.abs(merged.blend - prev.blend) < 0.001
   ) {
     return;
   }
