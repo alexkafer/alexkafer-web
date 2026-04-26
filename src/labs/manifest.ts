@@ -4,7 +4,7 @@ import type { LabMeta } from "./types";
 
 export const heroMeta: LabMeta = {
   slug: "hero",
-  title: "Identified Contact",
+  title: "Hello",
   blurb: "Senior PM, Xbox Platform.",
   version: "v0.0",
   status: "shipped",
@@ -13,8 +13,8 @@ export const heroMeta: LabMeta = {
 };
 
 export const disguiseMeta: LabMeta = {
-  slug: "disguise",
-  title: "The Disguise",
+  slug: "resume",
+  title: "RÉSUMÉ",
   blurb: "Product by title, systems by practice.",
   version: "v0.2",
   status: "shipped",

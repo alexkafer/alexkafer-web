@@ -29,7 +29,7 @@ export function VelocitySection() {
     >
       <SectionInner className="flex min-h-screen flex-col justify-center gap-12">
         <div ref={ref as React.RefObject<HTMLDivElement>} className="space-y-12">
-          <p id="velocity-marker" className="font-mono text-sm uppercase tracking-widest text-amber">
+          <p id="velocity-marker" className="ml-9 font-mono text-sm uppercase tracking-widest text-amber">
             {"// 04 · VELOCITY"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">

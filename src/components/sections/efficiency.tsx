@@ -68,7 +68,7 @@ export function EfficiencySection() {
           ref={ref as React.RefObject<HTMLDivElement>}
           className="space-y-12"
         >
-          <p id="efficiency-marker" className="font-mono text-sm uppercase tracking-widest text-amber">
+          <p id="efficiency-marker" className="ml-9 font-mono text-sm uppercase tracking-widest text-amber">
             {"// 06 · EFFICIENCY"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">

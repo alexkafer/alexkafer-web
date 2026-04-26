@@ -221,14 +221,21 @@ function ConstellationNodes({
     // 1 in pure hero, 0 throughout section view.
     const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
     const inSectionView = sc.activeIndex >= 1;
+
+    // Resolve a DOM-anchor target for every section whose marker is currently
+    // in the viewport, not just the "active" one. This way an anchor star
+    // snaps into place as soon as its marker scrolls into view, instead of
+    // waiting for that section to become center-of-viewport active.
+    const anchorOverrides = new Map<number, THREE.Vector3>();
+    for (let s = 1; s < LABS.length; s++) {
+      const starIdx = assignment.sectionToStar.get(s);
+      if (starIdx === undefined) continue;
+      const pos = getAnchorWorldPos(LABS[s].slug, camera, gl.domElement);
+      if (pos) anchorOverrides.set(starIdx, pos);
+    }
     const activeStarIdx = inSectionView
       ? assignment.sectionToStar.get(sc.activeIndex)
       : undefined;
-    const activeMeta = inSectionView ? LABS[sc.activeIndex] : undefined;
-    const activeAnchorPos =
-      inSectionView && activeMeta
-        ? getAnchorWorldPos(activeMeta.slug, camera, gl.domElement)
-        : null;
 
     if (cursor.current.active) {
       projected.current.set(cursor.current.x, cursor.current.y, 0.5);
@@ -286,10 +293,12 @@ function ConstellationNodes({
       }
       blendedTarget.current.copy(parkedTarget.current).lerp(cloudTarget.current, heroBlend);
 
-      // Active section star: override base target with DOM anchor when present.
+      // Per-star DOM anchor override: any section whose marker is currently
+      // visible pulls its anchor star to the marker.
+      const anchorPos = anchorOverrides.get(i);
       const isActiveStar = i === activeStarIdx;
-      if (isActiveStar && activeAnchorPos) {
-        node.a.copy(activeAnchorPos);
+      if (anchorPos) {
+        node.a.copy(anchorPos);
       } else {
         node.a.copy(blendedTarget.current);
       }
@@ -305,8 +314,9 @@ function ConstellationNodes({
       const ox = Math.sin(t * speed + phaseX) * ampX * wobbleScale;
       const oy = Math.sin(t * speed * 1.3 + phaseY) * ampY * wobbleScale;
       const oz = Math.sin(t * speed * 0.9 + phaseZ) * ampZ * wobbleScale;
-      // Active star wobbles less so it sits cleanly beside the marker.
-      const wobbleAtten = isActiveStar && activeAnchorPos ? 0.15 : 1;
+      // Stars docked to a DOM marker wobble less so they sit cleanly beside
+      // the marker text.
+      const wobbleAtten = anchorPos ? 0.15 : 1;
       const baseX = node.base.x + ox * wobbleAtten;
       const baseY = node.base.y + oy * wobbleAtten;
       const baseZ = node.base.z + oz * wobbleAtten;
@@ -329,7 +339,7 @@ function ConstellationNodes({
       positionsRef.current[i].copy(mesh.position);
 
       // Scale: active star bigger.
-      const targetScale = isActiveStar && activeAnchorPos ? ACTIVE_SCALE : 1;
+      const targetScale = isActiveStar && anchorPos ? ACTIVE_SCALE : 1;
       mesh.scale.lerp(
         tmp.current.set(targetScale, targetScale, targetScale),
         0.15,
@@ -341,7 +351,7 @@ function ConstellationNodes({
       mat.color.copy(colorTmp.current);
       mat.emissive.copy(colorTmp.current);
       mat.emissiveIntensity =
-        isActiveStar && activeAnchorPos ? ACTIVE_EMISSIVE : BASE_EMISSIVE;
+        isActiveStar && anchorPos ? ACTIVE_EMISSIVE : BASE_EMISSIVE;
       mat.transparent = true;
       mat.opacity = 1;
     });
@@ -596,7 +606,7 @@ function Scene() {
 
   const isPortrait = viewport.width < viewport.height;
   const isCompact = viewport.width < 6;
-  const nodeCount = isCompact ? 16 : isPortrait ? 20 : HERO_DEFAULT_NODE_COUNT;
+  const nodeCount = isCompact ? 11 : isPortrait ? 12 : HERO_DEFAULT_NODE_COUNT;
 
   const ampScale = minDim;
   const nodes = useMemo(

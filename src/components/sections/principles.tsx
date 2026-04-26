@@ -96,7 +96,7 @@ export function PrinciplesSection() {
   return (
     <Section id="principles" aria-label="Principles">
       <SectionInner>
-        <p id="principles-marker" className="font-mono text-xs uppercase tracking-widest text-amber">
+        <p id="principles-marker" className="ml-9 font-mono text-xs uppercase tracking-widest text-amber">
           {"// 09 · PRINCIPLES"}
         </p>
         <h2 className="mt-4 text-4xl font-semibold text-mute-100 md:text-5xl">

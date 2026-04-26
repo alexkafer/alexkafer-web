@@ -49,7 +49,7 @@ export function ReliabilitySection() {
           ref={ref as React.RefObject<HTMLDivElement>}
           className="space-y-12"
         >
-          <p id="reliability-marker" className="font-mono text-sm uppercase tracking-widest text-amber">
+          <p id="reliability-marker" className="ml-9 font-mono text-sm uppercase tracking-widest text-amber">
             {"// 05 · RELIABILITY"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">

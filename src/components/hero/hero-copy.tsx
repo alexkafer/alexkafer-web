@@ -62,7 +62,7 @@ export function HeroCopy() {
           variants={line}
           className="mb-6 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/60"
         >
-          {"// IDENTIFIED CONTACT"}
+          {"Hello, my name is"}
         </motion.div>
         <h1 className="flex flex-col items-center gap-2">
           <motion.span
@@ -75,13 +75,13 @@ export function HeroCopy() {
             variants={line}
             className="font-sans text-lg font-light tracking-tight text-mute-300 sm:text-xl md:text-2xl"
           >
-            Senior PM, Xbox Platform.
+            Senior Product Manager
           </motion.span>
           <motion.span
             variants={line}
             className="font-sans text-lg font-light tracking-tight text-cyan sm:text-xl md:text-2xl"
           >
-            Operating at platform scale.
+            Solving Problems at Scale
           </motion.span>
         </h1>
 

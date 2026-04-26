@@ -83,7 +83,7 @@ export function ReachSection() {
     <Section id="reach" aria-label="Reach">
       <div ref={ref}>
         <SectionInner>
-          <p id="reach-marker" className="font-mono text-xs uppercase tracking-widest text-amber">
+          <p id="reach-marker" className="ml-9 font-mono text-xs uppercase tracking-widest text-amber">
             {"// 07 · REACH"}
           </p>
           <h2 className="mt-4 max-w-3xl text-4xl font-semibold text-mute-100 md:text-5xl">

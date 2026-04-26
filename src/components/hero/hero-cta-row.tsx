@@ -40,7 +40,7 @@ export function HeroCtaRow() {
           onClick={() => smoothScrollTo("#disguise")}
           className="group inline-flex items-center justify-center gap-2 rounded-md bg-cyan px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-void transition-colors hover:bg-cyan/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900"
         >
-          <span>Explore</span>
+          <span>Learn With Me</span>
           <span aria-hidden className="transition-transform group-hover:translate-y-0.5">↓</span>
         </button>
 
@@ -50,7 +50,7 @@ export function HeroCtaRow() {
           rel={cta ? "noreferrer noopener" : undefined}
           onClick={onSecondaryClick}
           aria-label={cta ? `${cta.label} (variant ${assigned}${converted ? ", conversion recorded" : ""})` : "Loading variant"}
-          className="group relative inline-flex items-center justify-center gap-2 rounded-md border border-cyan/40 bg-cyan/5 px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-cyan transition-colors hover:bg-cyan/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900"
+          className="group relative inline-flex items-center justify-center gap-2 rounded-md border border-cyan/40 bg-void/80 px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-cyan backdrop-blur-md transition-colors hover:bg-void/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900"
         >
           <span
             aria-hidden

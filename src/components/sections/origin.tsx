@@ -71,7 +71,7 @@ export function OriginSection() {
       <div ref={ref} className="relative">
         <Starfield />
         <SectionInner className="relative">
-          <p id="origin-marker" className="font-mono text-xs uppercase tracking-widest text-amber">
+          <p id="origin-marker" className="ml-9 font-mono text-xs uppercase tracking-widest text-amber">
             {"// 08 · ORIGIN"}
           </p>
           <h2 className="mt-4 max-w-3xl text-4xl font-semibold text-mute-100 md:text-5xl">

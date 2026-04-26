@@ -23,7 +23,7 @@ function lcg(seed: number) {
   };
 }
 
-export const HERO_DEFAULT_NODE_COUNT = 22;
+export const HERO_DEFAULT_NODE_COUNT = 14;
 
 export function buildHeroNodes(config: HeroNodeConfig): HeroNode[] {
   const { count, spreadX, spreadY, spreadZ, seed = 1337 } = config;
