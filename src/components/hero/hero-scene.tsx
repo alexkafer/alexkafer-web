@@ -148,6 +148,7 @@ function ConstellationNodes({
   const refs = useRef<(THREE.Mesh | null)[]>([]);
   const offsets = useRef<THREE.Vector3[]>(nodes.map(() => new THREE.Vector3()));
   const projected = useRef(new THREE.Vector3());
+  const dirTmp = useRef(new THREE.Vector3());
   const tmp = useRef(new THREE.Vector3());
   const colorTmp = useRef(new THREE.Color());
   const cloudTarget = useRef(new THREE.Vector3());
@@ -184,9 +185,9 @@ function ConstellationNodes({
     if (cursor.current.active) {
       projected.current.set(cursor.current.x, cursor.current.y, 0.5);
       projected.current.unproject(camera);
-      const dir = projected.current.sub(camera.position).normalize();
-      const distance = -camera.position.z / dir.z;
-      projected.current.copy(camera.position).add(dir.multiplyScalar(distance));
+      dirTmp.current.copy(projected.current).sub(camera.position).normalize();
+      const distance = -camera.position.z / dirTmp.current.z;
+      projected.current.copy(camera.position).add(dirTmp.current.multiplyScalar(distance));
     }
 
     const cloudFn = LAYOUTS.cloud;
