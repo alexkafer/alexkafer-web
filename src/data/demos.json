@@ -1,0 +1,232 @@
+[
+  {
+    "repo": "alexkafer/lightshow-games-server",
+    "name": "lightshow-games-server",
+    "description": "Rhabdomancy is a divination technique which involves the use of any rod, staff, stick, arrow, or the like. In other words, magical wands. ",
+    "homepage": "",
+    "language": "TypeScript",
+    "stars": 0,
+    "pushedAt": "2026-01-27T07:50:06Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/lightshow-games-client",
+    "name": "lightshow-games-client",
+    "description": "Light Show Games Client",
+    "homepage": "https://alexkafer.github.io/lightshow-games-client/",
+    "language": "JavaScript",
+    "stars": 0,
+    "pushedAt": "2026-01-27T07:49:53Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/alexkafer-web",
+    "name": "alexkafer-web",
+    "description": "",
+    "homepage": "",
+    "language": "JavaScript",
+    "stars": 0,
+    "pushedAt": "2025-05-31T20:42:09Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/electrove",
+    "name": "electrove",
+    "description": "Electrove Website from MIT Launch",
+    "homepage": "",
+    "language": "HTML",
+    "stars": 0,
+    "pushedAt": "2020-05-18T15:15:50Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/planets",
+    "name": "planets",
+    "description": "OpenGL Planet Rendering",
+    "homepage": "",
+    "language": "C++",
+    "stars": 0,
+    "pushedAt": "2020-05-15T16:20:46Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/opengl-animation",
+    "name": "opengl-animation",
+    "description": "OpenGL project for UMN CSCI5611, Animation and Planning in Games",
+    "homepage": "",
+    "language": "C++",
+    "stars": 0,
+    "pushedAt": "2020-04-02T15:38:22Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/GopherGoldIndicator",
+    "name": "GopherGoldIndicator",
+    "description": "Get your gopher gold balance using a python script",
+    "homepage": "",
+    "language": "Python",
+    "stars": 0,
+    "pushedAt": "2018-04-19T00:22:12Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/CrowdWeb",
+    "name": "CrowdWeb",
+    "description": "",
+    "homepage": "",
+    "language": "TypeScript",
+    "stars": 0,
+    "pushedAt": "2018-02-06T14:52:18Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/CrowdServer",
+    "name": "CrowdServer",
+    "description": "",
+    "homepage": "",
+    "language": "Python",
+    "stars": 0,
+    "pushedAt": "2017-12-16T06:26:35Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/CrowdClient",
+    "name": "CrowdClient",
+    "description": "A websocket client for the Tesla Works Winter Light Show. Translates data to DMX.",
+    "homepage": "http://lightshow.teslaworks.net",
+    "language": "Python",
+    "stars": 0,
+    "pushedAt": "2017-12-09T20:37:05Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/TEDxUMN-Wordpress",
+    "name": "TEDxUMN-Wordpress",
+    "description": "The wordpress website for TEDxUMN",
+    "homepage": "",
+    "language": "PHP",
+    "stars": 1,
+    "pushedAt": "2017-03-21T22:10:17Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/LinkedInRedirect",
+    "name": "LinkedInRedirect",
+    "description": "A simple javascript redirect function with noscript failsafe. Redirects linkedin.alexkafer.com to my linkedin profile.",
+    "homepage": "",
+    "language": "HTML",
+    "stars": 0,
+    "pushedAt": "2016-10-12T15:26:48Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/TimeSlot",
+    "name": "TimeSlot",
+    "description": "Provides the backend and interface for a simple timeslot manager and queue system. Allows people to regsiter for timeslots and if they do not check in by their time, the server will automatically provide access to the next on the waitlist",
+    "homepage": "",
+    "language": "",
+    "stars": 1,
+    "pushedAt": "2016-09-13T23:32:05Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/MotionProfileBot",
+    "name": "MotionProfileBot",
+    "description": "",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-05-10T03:35:02Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/plant-website",
+    "name": "plant-website",
+    "description": "Crimson Robotics Plant Fundraiser for 2016. Hosted on my personal website for the fundraiser, will be removed once plants are delivered. Will remain saved on GitHub for posterity. ",
+    "homepage": "http://alexkafer.github.io/plant-website/",
+    "language": "JavaScript",
+    "stars": 0,
+    "pushedAt": "2016-04-03T03:27:03Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/FRC-Travis-CI-Test",
+    "name": "FRC-Travis-CI-Test",
+    "description": "",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-03-14T15:13:49Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/MultiDrive",
+    "name": "MultiDrive",
+    "description": "Allows FRC robotics to dynamically switch between crane-esque drive, arcade drive, and tank drive. ",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-01-30T15:19:10Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/VisualThrottle",
+    "name": "VisualThrottle",
+    "description": "Uses OpenCV to communicate throttle with the FRC robot",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-01-18T18:06:34Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/LightsaberCV",
+    "name": "LightsaberCV",
+    "description": "Turns a RotatedRect into a Lightsaber",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-01-18T18:04:57Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/Biggest-Circle",
+    "name": "Biggest-Circle",
+    "description": "Circles the biggest particle in the threshold.",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2016-01-18T15:40:36Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/YellowToteTracker",
+    "name": "YellowToteTracker",
+    "description": "OpenCV tracking of the FRC 2015 yellow tote",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2015-02-09T15:24:33Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/Simple-PID-Controller",
+    "name": "Simple-PID-Controller",
+    "description": "",
+    "homepage": "",
+    "language": "Java",
+    "stars": 0,
+    "pushedAt": "2015-02-07T17:21:54Z",
+    "hidden": false
+  },
+  {
+    "repo": "alexkafer/Bytes",
+    "name": "Bytes",
+    "description": "Submission for the STEM House App Challenge",
+    "homepage": "",
+    "language": "Objective-C",
+    "stars": 0,
+    "pushedAt": "2014-04-30T02:41:02Z",
+    "hidden": false
+  }
+]
