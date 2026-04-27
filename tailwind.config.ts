@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,24 +11,24 @@ const config: Config = {
     extend: {
       colors: {
         void: {
-          DEFAULT: "#050510",
-          900: "#050510",
-          800: "#0a0e1a",
-          700: "#0f1623",
-          600: "#141c2e",
+          DEFAULT: "rgb(var(--color-void-900) / <alpha-value>)",
+          900: "rgb(var(--color-void-900) / <alpha-value>)",
+          800: "rgb(var(--color-void-800) / <alpha-value>)",
+          700: "rgb(var(--color-void-700) / <alpha-value>)",
+          600: "rgb(var(--color-void-600) / <alpha-value>)",
         },
         cyan: {
-          DEFAULT: "#7dd3fc",
-          glow: "#7dd3fc",
+          DEFAULT: "rgb(var(--color-cyan) / <alpha-value>)",
+          glow: "rgb(var(--color-cyan) / <alpha-value>)",
         },
         amber: {
-          DEFAULT: "#fbbf24",
+          DEFAULT: "rgb(var(--color-amber) / <alpha-value>)",
         },
         mute: {
-          100: "#e6edf3",
-          300: "#9ca3af",
-          500: "#6b7280",
-          700: "#374151",
+          100: "rgb(var(--color-mute-100) / <alpha-value>)",
+          300: "rgb(var(--color-mute-300) / <alpha-value>)",
+          500: "rgb(var(--color-mute-500) / <alpha-value>)",
+          700: "rgb(var(--color-mute-700) / <alpha-value>)",
         },
       },
       fontFamily: {
@@ -35,7 +36,7 @@ const config: Config = {
         mono: ["var(--font-jetbrains)", "ui-monospace", "monospace"],
       },
       boxShadow: {
-        glow: "0 0 12px rgba(125,211,252,0.6)",
+        glow: "0 0 12px rgb(var(--color-cyan) / 0.6)",
       },
     },
   },
