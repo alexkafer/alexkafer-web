@@ -169,23 +169,22 @@ export function ABTestSection() {
     <Section id="lab" aria-label="Live A/B test">
       <SectionInner>
         <p id="lab-marker" className="ml-9 font-mono text-xs uppercase tracking-widest text-amber">
-          {"// 10 · LAB"}
+          {"// 03 · LAB"}
         </p>
         <h2 className="mt-4 text-4xl font-semibold text-mute-100 md:text-5xl">
-          Show, don&apos;t tell. A live A/B test.
+          I learn by doing. A live A/B test.
         </h2>
         <p className="mt-6 max-w-2xl text-base text-mute-300">
-          The secondary CTA in the hero is the experiment. Your session was
+          The secondary button is a live A/B test and your session was
           randomly assigned to one variant. Clicking that button records a
-          conversion. The query and scorecard below run against a real SQL
-          database — every visitor&apos;s data is in here.
+          conversion. The query and scorecard below run against a Cloudflare D1
+          database.
         </p>
 
         <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Left column: experiment */}
           <div>
             <div className="space-y-1 font-mono text-xs uppercase tracking-widest text-mute-500">
-              <div>EXPERIMENT: <span className="text-mute-100">{EXPERIMENT_ID}</span></div>
               <div>YOUR SESSION: <span className="text-mute-100">{shortId(sessionId)}</span></div>
               <div>
                 ASSIGNED VARIANT:{" "}

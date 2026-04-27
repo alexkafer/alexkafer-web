@@ -13,6 +13,11 @@ export const heroMeta: LabMeta = {
 };
 
 export const disguiseMeta: LabMeta = {
+  // slug MUST match the section's DOM id (`<Section id="...">`) AND its
+  // header marker id (`<p id="${slug}-marker">`). The scroll driver in
+  // constellation-background.tsx uses `getElementById(slug)` to find each
+  // section, and dom-anchor.ts uses `${slug}-marker` to align stars to
+  // headings.
   slug: "resume",
   title: "RÉSUMÉ",
   blurb: "Product by title, systems by practice.",
@@ -23,81 +28,15 @@ export const disguiseMeta: LabMeta = {
   color: "#a78bfa",
 };
 
-export const scaleMeta: LabMeta = {
-  slug: "scale",
-  title: "Scale",
-  blurb: "From two players to two million.",
+export const demosMeta: LabMeta = {
+  slug: "demos",
+  title: "Demos",
+  blurb: "Side projects, prototypes, and experiments.",
   version: "v0.3",
   status: "shipped",
-  tags: ["platform"],
+  tags: ["projects"],
   order: 30,
   color: "#7dd3fc",
-};
-
-export const velocityMeta: LabMeta = {
-  slug: "velocity",
-  title: "Velocity",
-  blurb: "Ship and learn fast.",
-  version: "v0.4",
-  status: "shipped",
-  tags: ["platform"],
-  order: 40,
-  color: "#34d399",
-};
-
-export const reliabilityMeta: LabMeta = {
-  slug: "reliability",
-  title: "Reliability",
-  blurb: "Quiet pagers, awake users.",
-  version: "v0.5",
-  status: "shipped",
-  tags: ["platform"],
-  order: 50,
-  color: "#fbbf24",
-};
-
-export const efficiencyMeta: LabMeta = {
-  slug: "efficiency",
-  title: "Efficiency",
-  blurb: "Do more with the same fleet.",
-  version: "v0.6",
-  status: "shipped",
-  tags: ["platform"],
-  order: 60,
-  color: "#f472b6",
-};
-
-export const reachMeta: LabMeta = {
-  slug: "reach",
-  title: "Reach",
-  blurb: "Rolling out without breaking it.",
-  version: "v0.7",
-  status: "shipped",
-  tags: ["platform"],
-  order: 70,
-  color: "#60a5fa",
-};
-
-export const originMeta: LabMeta = {
-  slug: "origin",
-  title: "Origin",
-  blurb: "Where the platform thinking started.",
-  version: "v0.8",
-  status: "shipped",
-  tags: ["story"],
-  order: 80,
-  color: "#fb923c",
-};
-
-export const principlesMeta: LabMeta = {
-  slug: "principles",
-  title: "Principles",
-  blurb: "How I work, distilled.",
-  version: "v0.9",
-  status: "shipped",
-  tags: ["story"],
-  order: 90,
-  color: "#c4b5fd",
 };
 
 export const labMeta: LabMeta = {
@@ -112,16 +51,6 @@ export const labMeta: LabMeta = {
 };
 
 // Order MUST match the rendered <section id="..."> order in app/page.tsx so
-// the scroll driver's section index lines up with this array.
-export const LABS: LabMeta[] = [
-  heroMeta,
-  disguiseMeta,
-  scaleMeta,
-  velocityMeta,
-  reliabilityMeta,
-  efficiencyMeta,
-  reachMeta,
-  originMeta,
-  principlesMeta,
-  labMeta,
-];
+// the scroll driver's section index lines up with this array. The hero is
+// index 0; everything after gets one anchor star (see section-stars.ts).
+export const LABS: LabMeta[] = [heroMeta, disguiseMeta, demosMeta, labMeta];

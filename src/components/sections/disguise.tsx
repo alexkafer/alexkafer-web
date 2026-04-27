@@ -135,14 +135,14 @@ function ResumeRow({ entry }: { entry: ResumeEntry }) {
 
 export function DisguiseSection() {
   return (
-    <Section id="disguise" aria-label="The Résumé" className="!min-h-0">
+    <Section id="resume" aria-label="Résumé" className="!min-h-0">
       <SectionInner className="flex flex-col gap-12">
         <div className="space-y-6">
           <p
-            id="disguise-marker"
+            id="resume-marker"
             className="ml-9 font-mono text-sm uppercase tracking-widest text-amber"
           >
-            {"// 01 · THE RÉSUMÉ"}
+            {"// 01 · RÉSUMÉ"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">
             <span className="block">PM by title.</span>

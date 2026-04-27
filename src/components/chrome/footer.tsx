@@ -65,9 +65,6 @@ export default function Footer() {
             </a>
           </div>
         </div>
-        <p className="text-[10px] text-mute-500 sm:text-xs">
-          {"// transmission stable · all systems nominal"}
-        </p>
       </div>
     </footer>
   );
