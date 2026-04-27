@@ -2,6 +2,7 @@
 
 import { useActiveSectionIndex } from "./scroll-state";
 import { LABS } from "@/labs";
+import { ThemeToggle } from "@/components/chrome/theme-toggle";
 
 export function HudChrome() {
   const activeIdx = useActiveSectionIndex();
@@ -21,6 +22,8 @@ export function HudChrome() {
         </span>
         <span className="text-cyan/30">|</span>
         <span>ALEX KAFER</span>
+        <span className="text-cyan/30">|</span>
+        <ThemeToggle />
       </div>
     </div>
   );

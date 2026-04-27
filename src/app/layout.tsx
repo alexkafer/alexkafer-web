@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/lib/lenis-provider";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { ThemeToggle } from "@/components/chrome/theme-toggle";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -94,7 +93,6 @@ export default function RootLayout({
           Skip to content
         </a>
         <ThemeProvider>
-          <ThemeToggle />
           <LenisProvider>{children}</LenisProvider>
         </ThemeProvider>
         <script
