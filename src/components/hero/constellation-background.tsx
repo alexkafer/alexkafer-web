@@ -103,7 +103,8 @@ export function ConstellationBackground() {
         className="pointer-events-none fixed inset-0 z-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(5,5,16,0) 0%, rgba(5,5,16,0.55) 60%, rgba(5,5,16,0.92) 100%)",
+            "radial-gradient(ellipse at center, rgb(var(--hero-vignette) / 0) 0%, rgb(var(--hero-vignette) / 0.55) 60%, rgb(var(--hero-vignette) / 0.92) 100%)",
+          transition: "background 250ms ease",
         }}
       />
     </>
