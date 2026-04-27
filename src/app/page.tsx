@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 import { ABExperimentProvider } from "@/lib/ab-context";
 import Hero from "@/components/hero";
 import HudChrome from "@/components/hero/hud-chrome";
-import Disguise from "@/components/sections/disguise";
+import Resume from "@/components/sections/resume";
 import Demos from "@/components/sections/demos";
 import ABTest from "@/components/sections/ab-test";
 import Footer from "@/components/chrome/footer";
@@ -29,7 +29,7 @@ export default function Page() {
       <HudChrome />
       <main id="main-content" className="relative z-10 text-mute-100">
         <Hero />
-        <Disguise />
+        <Resume />
         <Demos />
         <ABTest />
         <Footer />

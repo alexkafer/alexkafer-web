@@ -12,7 +12,7 @@ export const heroMeta: LabMeta = {
   order: 0,
 };
 
-export const disguiseMeta: LabMeta = {
+export const resumeMeta: LabMeta = {
   // slug MUST match the section's DOM id (`<Section id="...">`) AND its
   // header marker id (`<p id="${slug}-marker">`). The scroll driver in
   // constellation-background.tsx uses `getElementById(slug)` to find each
@@ -53,4 +53,4 @@ export const labMeta: LabMeta = {
 // Order MUST match the rendered <section id="..."> order in app/page.tsx so
 // the scroll driver's section index lines up with this array. The hero is
 // index 0; everything after gets one anchor star (see section-stars.ts).
-export const LABS: LabMeta[] = [heroMeta, disguiseMeta, demosMeta, labMeta];
+export const LABS: LabMeta[] = [heroMeta, resumeMeta, demosMeta, labMeta];

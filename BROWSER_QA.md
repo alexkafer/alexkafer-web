@@ -19,7 +19,7 @@ require a human at a real browser.
 - [ ] HUD top strip shows live `T+` counter; status pill ticks plausible numbers
 - [ ] Lenis smooth-scroll feels smooth (no jank, no double-scroll)
 - [ ] Each section's scroll-driven animation triggers at the right viewport position:
-  - [ ] Disguise — x-ray overlay
+  - [ ] Résumé — x-ray overlay
   - [ ] Scale — counters animate to 9 / 100M / 100+
   - [ ] Velocity — months → weeks bar drains
   - [ ] Reliability — 99.9% gauge fills, 200-tile grid lights green

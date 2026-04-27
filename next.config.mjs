@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Isolate dev's build artifacts from production's so running `npm run build`
+  // (or `cf:build`) while the portless dev server is up doesn't clobber the
+  // dev server's webpack chunks — which would leave the browser fetching 404'd
+  // chunks and rendering only the SSR shell ("Skip to content").
+  // OpenNext / `cf:build` still expects the default `.next/`.
+  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
 };
 
 // Hook OpenNext into `next dev` so route handlers can lazily access

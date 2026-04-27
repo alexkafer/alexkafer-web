@@ -37,7 +37,7 @@ export function HeroCtaRow() {
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
         <button
           type="button"
-          onClick={() => smoothScrollTo("#disguise")}
+          onClick={() => smoothScrollTo("#resume")}
           className="group inline-flex items-center justify-center gap-2 rounded-md bg-cyan px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-void transition-colors hover:bg-cyan/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-void-900"
         >
           <span>Learn With Me</span>

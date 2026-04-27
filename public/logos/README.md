@@ -1,7 +1,7 @@
 # Résumé logos
 
 Drop monochrome SVGs here. The Résumé section in
-`src/components/sections/disguise.tsx` references these files by exact
+`src/components/sections/resume.tsx` references these files by exact
 filename. Until a file exists, the section renders a placeholder block
 in the logo's footprint — caption text still reads.
 
@@ -20,7 +20,7 @@ in the logo's footprint — caption text still reads.
 If a logo only ships as a fixed-color asset (e.g. `fill="white"` instead
 of `fill="currentColor"`), commit both light and dark variants and point
 the entry at the correct one via the `logoSrc` field on the entry in
-`src/components/sections/disguise.tsx`. The site is dark-themed, so the
+`src/components/sections/resume.tsx`. The site is dark-themed, so the
 white variant is usually correct.
 
 ## Style guidelines

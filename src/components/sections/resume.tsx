@@ -69,6 +69,7 @@ const RESUME_TIERS: ResumeTier[] = [
         slug: "first-2526",
         name: "FIRST Robotics · Team 2526",
         role: "High school robotics",
+        logoSrc: "/logos/first.svg",
         awards: [
           "Dean's List Finalist",
           "Chairman's Award",
@@ -79,6 +80,7 @@ const RESUME_TIERS: ResumeTier[] = [
         slug: "mit-launch",
         name: "MIT Launch",
         role: "Entrepreneurship program",
+        logoSrc: "/logos/mit.svg",
       },
     ],
   },
@@ -133,7 +135,7 @@ function ResumeRow({ entry }: { entry: ResumeEntry }) {
   );
 }
 
-export function DisguiseSection() {
+export function ResumeSection() {
   return (
     <Section id="resume" aria-label="Résumé" className="!min-h-0">
       <SectionInner className="flex flex-col gap-12">
@@ -182,4 +184,4 @@ export function DisguiseSection() {
   );
 }
 
-export default DisguiseSection;
+export default ResumeSection;
