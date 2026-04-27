@@ -4,26 +4,30 @@ User actions required to take alexkafer.com live on Cloudflare Workers.
 
 ## Cloudflare provisioning
 
-- [ ] Repo pushed to GitHub
-- [ ] `wrangler login` (Cloudflare account authorized locally)
-- [ ] `wrangler d1 create alexkafer-ab` → paste the printed `database_id`
+- [x] Repo pushed to GitHub
+- [x] `wrangler login` (Cloudflare account authorized locally)
+- [x] `wrangler d1 create alexkafer-ab` → paste the printed `database_id`
       into `wrangler.toml` (replace `REPLACE_WITH_D1_ID`)
-- [ ] `wrangler d1 migrations apply alexkafer-ab --remote` (creates the
+      → id `b5a02e06-091e-4388-bfab-fe6d5a401a25`
+- [x] `wrangler d1 migrations apply alexkafer-ab --remote` (creates the
       `ab_events` table + indexes from `migrations/0001_init.sql`)
-- [ ] `npm run cf:deploy` succeeds end-to-end
-- [ ] Confirm the `StatsAggregator` Durable Object migration applied
+- [x] `npm run cf:deploy` succeeds end-to-end
+      → live at https://alexkafer.lucky-bird-b768.workers.dev
+- [x] Confirm the `StatsAggregator` Durable Object migration applied
       (only happens on first deploy — check `wrangler tail` or the
       Workers dashboard for the binding)
+      → confirmed in deploy output and via `/api/ab/impression`
+      returning `alreadyImpressed`
 
 ## Domain + DNS
 
-- [ ] Add `alexkafer.com` as a custom domain on the Worker (Workers
+- [x] Add `alexkafer.com` as a custom domain on the Worker (Workers
       dashboard → the worker → Settings → Domains & Routes → Add Custom
       Domain)
-- [ ] If `alexkafer.com` already uses Cloudflare DNS: the custom-domain
+- [x] If `alexkafer.com` already uses Cloudflare DNS: the custom-domain
       flow auto-creates the CNAME. Otherwise, either move NS to
       Cloudflare or add a proxied CNAME from the registrar.
-- [ ] HTTPS verified (Cloudflare auto-provisions; check both apex and
+- [x] HTTPS verified (Cloudflare auto-provisions; check both apex and
       `www`)
 
 ## Content + UX
