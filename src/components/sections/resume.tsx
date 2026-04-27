@@ -95,19 +95,26 @@ function LogoMark({
   name: string;
   src?: string;
 }) {
-  // Plain <img> from /public — small monochrome SVGs, no need for next/image.
-  // A muted background block holds the footprint until the SVG ships.
+  // Render the SVG as a silhouette via CSS mask so it themes cleanly:
+  // pure black on light backgrounds, pure white on dark. The original
+  // SVG fills are ignored — only the shape carries through.
+  const url = src ?? `/logos/${slug}.svg`;
   return (
-    <span className="relative inline-flex h-8 w-16 shrink-0 items-center justify-start">
-      <span aria-hidden className="absolute inset-0 rounded bg-mute-700/20" />
-      <img
-        src={src ?? `/logos/${slug}.svg`}
-        alt={`${name} logo`}
-        className="relative h-8 w-auto max-w-full object-contain object-left text-mute-100 opacity-90 transition-opacity hover:opacity-100"
-        loading="lazy"
-        decoding="async"
-      />
-    </span>
+    <span
+      role="img"
+      aria-label={`${name} logo`}
+      className="relative inline-block h-8 w-16 shrink-0 bg-black opacity-90 transition-opacity hover:opacity-100 dark:bg-white"
+      style={{
+        WebkitMaskImage: `url(${url})`,
+        maskImage: `url(${url})`,
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskPosition: "left center",
+        maskPosition: "left center",
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+      }}
+    />
   );
 }
 
