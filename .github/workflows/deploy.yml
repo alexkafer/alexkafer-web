@@ -42,7 +42,7 @@ jobs:
       # ─── Production: push to main ────────────────────────────────
       - name: Apply D1 migrations (production)
         if: github.event_name == 'push'
-        run: npx wrangler d1 migrations apply alexkafer-ab --remote --yes
+        run: npx wrangler d1 migrations apply alexkafer-ab --remote
 
       - name: Deploy to production Worker
         if: github.event_name == 'push'
