@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
-import { useEffect, useMemo, useRef } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { HERO_DEFAULT_NODE_COUNT } from "./use-hero-nodes";
 import { LAYOUTS } from "./section-layouts";
@@ -15,6 +15,9 @@ import {
   type SectionAssignment,
 } from "./section-stars";
 import { getAnchorWorldPos } from "./dom-anchor";
+import { useTheme } from "@/lib/theme-provider";
+import type { ResolvedTheme } from "@/lib/theme";
+import { planetColor } from "./planet-palette";
 
 // Hero scene — Three.js constellation behind the page.
 //
@@ -73,6 +76,11 @@ const STAR_COUNT = 1500;
 const STAR_RADIUS = 30;
 const DAMPING = 0.05;
 const BASE_LERP = 0.08;
+
+const HeroThemeContext = createContext<ResolvedTheme>("dark");
+function useHeroTheme(): ResolvedTheme {
+  return useContext(HeroThemeContext);
+}
 
 function Starfield() {
   const geometry = useMemo(() => {
@@ -204,6 +212,15 @@ function ConstellationNodes({
   const blendedTarget = useRef(new THREE.Vector3());
   const { camera, gl } = useThree();
 
+  const heroTheme = useHeroTheme();
+  const themeBlend = useRef(heroTheme === "light" ? 1 : 0);
+  const planetTargets = useMemo(
+    () => parkedColors.map((_, i) => planetColor(i)),
+    [parkedColors],
+  );
+  const planetTmp = useRef(new THREE.Color());
+  const sunTmp = useRef(new THREE.Color());
+
   // Initialize each node's base to its hero/cloud layout so the first frame
   // doesn't snap from the origin.
   useEffect(() => {
@@ -272,6 +289,10 @@ function ConstellationNodes({
     const r0 = rotationFor(sc.activeIndex);
     const r1 = rotationFor(sc.nextIndex);
     const parkedRotation = r0 + (r1 - r0) * rotationBlend;
+
+    const targetBlend = heroTheme === "light" ? 1 : 0;
+    themeBlend.current += (targetBlend - themeBlend.current) * 0.06;
+    const tb = themeBlend.current; // 0 = sun (dark), 1 = planet (light)
 
     nodes.forEach((node, i) => {
       const mesh = refs.current[i];
@@ -347,13 +368,28 @@ function ConstellationNodes({
 
       // Color: blend cloud color → parked color by (1 - heroBlend).
       const mat = mesh.material as THREE.MeshStandardMaterial;
-      colorTmp.current.copy(NODE_COLOR_VEC).lerp(parkedColors[i], 1 - heroBlend);
+
+      // Sun-mode color (dark theme): existing cloud→parked blend.
+      sunTmp.current.copy(NODE_COLOR_VEC).lerp(parkedColors[i], 1 - heroBlend);
+      // Planet-mode color (light theme): stable planet hue, no cloud blend.
+      planetTmp.current.copy(planetTargets[i]);
+
+      // Lerp final color between the two metaphors using themeBlend.
+      colorTmp.current.copy(sunTmp.current).lerp(planetTmp.current, tb);
       mat.color.copy(colorTmp.current);
-      mat.emissive.copy(colorTmp.current);
-      mat.emissiveIntensity =
+
+      // Emissive: full sun glow at tb=0; black at tb=1 (planets don't glow).
+      mat.emissive.copy(sunTmp.current).multiplyScalar(1 - tb);
+      const baseEmis =
         isActiveStar && anchorPos ? ACTIVE_EMISSIVE : BASE_EMISSIVE;
+      mat.emissiveIntensity = baseEmis * (1 - tb);
+
+      // Surface: rougher / less metallic in planet mode.
+      mat.roughness = 0.4 + tb * 0.5;   // 0.4 → 0.9
+      mat.metalness = 0.1 - tb * 0.05;  // 0.1 → 0.05
       mat.transparent = true;
       mat.opacity = 1;
+      mat.needsUpdate = true;
     });
   });
 
@@ -527,10 +563,17 @@ function SectionLinks({
   const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
   const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
+  const heroTheme = useHeroTheme();
+  const linkBlend = useRef(heroTheme === "light" ? 1 : 0);
+
   useFrame(() => {
     const sc = getScrollState().current;
     const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
     const sectionFade = 1 - heroBlend; // 0 in hero, 1 in section view
+
+    const targetBlend = heroTheme === "light" ? 1 : 0;
+    linkBlend.current += (targetBlend - linkBlend.current) * 0.06;
+    const lb = linkBlend.current;
 
     allPairs.forEach((pair, k) => {
       const obj = lineRefs.current[k] as unknown as {
@@ -548,7 +591,7 @@ function SectionLinks({
       if (obj.material) {
         const isActive = pair.section === sc.activeIndex;
         obj.material.transparent = true;
-        obj.material.opacity = isActive ? 0.45 * sectionFade : 0;
+        obj.material.opacity = (isActive ? 0.45 * sectionFade : 0) * (1 - lb * 0.65);
       }
     });
   });
@@ -650,12 +693,18 @@ function Scene() {
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  const { resolvedTheme } = useTheme();
+
   return (
-    <>
-      <ambientLight intensity={0.4} />
-      <pointLight position={[6, 4, 6]} intensity={0.6} color="#7dd3fc" />
+    <HeroThemeContext.Provider value={resolvedTheme}>
+      <ambientLight intensity={resolvedTheme === "light" ? 0.6 : 0.4} />
+      <pointLight
+        position={[6, 4, 6]}
+        intensity={resolvedTheme === "light" ? 1.1 : 0.6}
+        color={resolvedTheme === "light" ? "#fff4d6" : "#7dd3fc"}
+      />
       <PointerTracker cursor={cursor} />
-      <Starfield />
+      {resolvedTheme === "dark" && <Starfield />}
       <ConstellationNodes
         nodes={nodes}
         cursor={cursor}
@@ -681,7 +730,7 @@ function Scene() {
         neighborPairs={neighborPairs}
         parkedColors={parkedColors}
       />
-    </>
+    </HeroThemeContext.Provider>
   );
 }
 
