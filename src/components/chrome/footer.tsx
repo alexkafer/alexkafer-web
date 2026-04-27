@@ -44,9 +44,8 @@ export default function Footer() {
             >
               <Mail className="h-5 w-5" aria-hidden="true" />
             </a>
-            {/* TODO: confirm exact LinkedIn vanity URL */}
             <a
-              href="https://www.linkedin.com/in/alexkafer/"
+              href="https://linkedin.alexkafer.com"
               aria-label="Alex Kafer on LinkedIn"
               target="_blank"
               rel="noopener noreferrer"

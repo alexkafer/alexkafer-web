@@ -32,8 +32,10 @@ User actions required to take alexkafer.com live on Cloudflare Workers.
 
 ## Content + UX
 
-- [ ] LinkedIn URL confirmed in `src/components/chrome/footer.tsx`
+- [x] LinkedIn URL confirmed in `src/components/chrome/footer.tsx`
       (resolve any TODO placeholder)
+      → using `https://linkedin.alexkafer.com` (also updated in
+      `src/lib/cta-variants.tsx`)
 - [ ] OG image renders correctly in Twitter / LinkedIn / Slack link
       previewers
 - [ ] Lighthouse audit ≥ 90 desktop (Performance / Accessibility /
@@ -47,13 +49,13 @@ User actions required to take alexkafer.com live on Cloudflare Workers.
 
 ## Lab section (D1 + DO)
 
-- [ ] Lab section loads on production
-- [ ] Impression POST returns `{ alreadyImpressed }` (DO path, not the
+- [x] Lab section loads on production
+- [x] Impression POST returns `{ alreadyImpressed }` (DO path, not the
       libsql fallback)
-- [ ] Click button records a conversion; second click in same session
+- [x] Click button records a conversion; second click in same session
       returns `alreadyConverted: true`
-- [ ] Scorecard updates and the displayed `STATS_QUERY` matches the
+- [x] Scorecard updates and the displayed `STATS_QUERY` matches the
       query in `src/lib/ab.ts`
-- [ ] Spot-check D1 has rows: `wrangler d1 execute alexkafer-ab
+- [x] Spot-check D1 has rows: `wrangler d1 execute alexkafer-ab
       --remote --command "SELECT variant, event, COUNT(*) FROM
       ab_events GROUP BY 1,2"`

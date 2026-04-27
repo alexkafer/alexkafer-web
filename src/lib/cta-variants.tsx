@@ -44,7 +44,7 @@ export const VARIANT_CTAS: Record<Variant, CtaConfig> = {
   },
   B: {
     label: "Connect on LinkedIn",
-    href: "https://www.linkedin.com/in/alexkafer/",
+    href: "https://linkedin.alexkafer.com",
     hint: "// career · network · message",
     Icon: LinkedinIcon,
   },
