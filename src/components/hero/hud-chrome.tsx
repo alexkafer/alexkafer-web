@@ -13,8 +13,6 @@ export function HudChrome() {
       <div className="flex items-center gap-2">
         <span className="text-amber">●</span>
         <span>NOMINAL</span>
-        <span className="text-cyan/30">|</span>
-        <span>LATENCY: GREEN</span>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-cyan">
