@@ -11,7 +11,6 @@ import { LABS } from "@/labs";
 import { labColor } from "./lab-color";
 import {
   assignSectionStars,
-  computeNeighborPairs,
   type SectionAssignment,
 } from "./section-stars";
 import { getAnchorWorldPos } from "./dom-anchor";
@@ -465,13 +464,11 @@ function ConstellationLinks({
   positionsRef,
   spread,
   linkDistance,
-  assignment,
 }: {
   nodes: LiveNode[];
   positionsRef: React.MutableRefObject<THREE.Vector3[]>;
   spread: { x: number; y: number; z: number };
   linkDistance: number;
-  assignment: SectionAssignment;
 }) {
   // Pair list = the *original* hero constellation graph: pairs that are
   // close in the cloud layout. We persist these across scroll and let the
@@ -517,12 +514,6 @@ function ConstellationLinks({
   const segBuffer = useRef<Float32Array>(new Float32Array(6));
 
   useFrame(() => {
-    const sc = getScrollState().current;
-    const inSectionView = sc.activeIndex >= 1;
-    const activeStarIdx = inSectionView
-      ? assignment.sectionToStar.get(sc.activeIndex)
-      : undefined;
-
     pairs.forEach((pair, k) => {
       const { i, j, cutoff } = pair;
       const obj = lineRefs.current[k] as unknown as {
@@ -546,15 +537,8 @@ function ConstellationLinks({
         // Full opacity until 0.7×cutoff, fade to 0 at cutoff.
         const fade =
           1 - THREE.MathUtils.smoothstep(dist, cutoff * 0.7, cutoff);
-        // Soft-suppress edges touching the active anchored star — the
-        // SectionLinks highlight already represents that star's neighbors,
-        // and the anchor pull can produce ugly tethers toward DOM labels.
-        const touchesActive =
-          activeStarIdx !== undefined &&
-          (i === activeStarIdx || j === activeStarIdx);
-        const attenuation = touchesActive ? 0.2 : 1;
         obj.material.transparent = true;
-        obj.material.opacity = 0.55 * fade * attenuation;
+        obj.material.opacity = 0.55 * fade;
       }
     });
   });
@@ -576,83 +560,6 @@ function ConstellationLinks({
           opacity={0.55}
           transparent
           lineWidth={1.4}
-        />
-      ))}
-    </group>
-  );
-}
-
-function SectionLinks({
-  positionsRef,
-  assignment,
-  neighborPairs,
-  parkedColors,
-}: {
-  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
-  assignment: SectionAssignment;
-  neighborPairs: Map<number, number[]>;
-  parkedColors: THREE.Color[];
-}) {
-  // Pre-allocate one Line per (section, neighbor) pair. We only render the
-  // active section's lines by toggling opacity each frame.
-  const allPairs: Array<{ section: number; from: number; to: number }> = [];
-  for (const [sectionIdx, neighbors] of Array.from(neighborPairs)) {
-    const fromIdx = assignment.sectionToStar.get(sectionIdx);
-    if (fromIdx === undefined) continue;
-    for (const toIdx of neighbors) {
-      allPairs.push({ section: sectionIdx, from: fromIdx, to: toIdx });
-    }
-  }
-
-  const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
-  const segBuffer = useRef<Float32Array>(new Float32Array(6));
-
-  const heroTheme = useHeroTheme();
-  const linkBlend = useRef(heroTheme === "light" ? 1 : 0);
-
-  useFrame(() => {
-    const sc = getScrollState().current;
-    const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
-    const sectionFade = 1 - heroBlend; // 0 in hero, 1 in section view
-
-    const targetBlend = heroTheme === "light" ? 1 : 0;
-    linkBlend.current += (targetBlend - linkBlend.current) * 0.06;
-    const lb = linkBlend.current;
-
-    allPairs.forEach((pair, k) => {
-      const obj = lineRefs.current[k] as unknown as {
-        geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
-        material?: { opacity?: number; transparent?: boolean };
-      } | null;
-      if (!obj?.geometry?.setPositions) return;
-      const a = positionsRef.current[pair.from];
-      const b = positionsRef.current[pair.to];
-      if (!a || !b) return;
-      const buf = segBuffer.current;
-      buf[0] = a.x; buf[1] = a.y; buf[2] = a.z;
-      buf[3] = b.x; buf[4] = b.y; buf[5] = b.z;
-      obj.geometry.setPositions(buf);
-      if (obj.material) {
-        const isActive = pair.section === sc.activeIndex;
-        obj.material.transparent = true;
-        obj.material.opacity = (isActive ? 0.45 * sectionFade : 0) * (1 - lb * 0.65);
-      }
-    });
-  });
-
-  return (
-    <group>
-      {allPairs.map((pair, k) => (
-        <Line
-          key={`${pair.section}-${pair.from}-${pair.to}`}
-          ref={(el) => {
-            lineRefs.current[k] = el as unknown as THREE.Object3D | null;
-          }}
-          points={[[0, 0, 0], [0, 0, 0]]}
-          color={parkedColors[pair.from]}
-          opacity={0}
-          transparent
-          lineWidth={1.2}
         />
       ))}
     </group>
@@ -749,11 +656,6 @@ function Scene() {
     [nodeCount, spread],
   );
 
-  const neighborPairs = useMemo(
-    () => computeNeighborPairs(assignment, nodeCount, spread),
-    [assignment, nodeCount, spread],
-  );
-
   const parkedColors = useMemo(
     () => makeNodeColors(nodeCount, assignment),
     [nodeCount, assignment],
@@ -827,13 +729,6 @@ function Scene() {
         positionsRef={positionsRef}
         spread={spread}
         linkDistance={linkDistance}
-        assignment={assignment}
-      />
-      <SectionLinks
-        positionsRef={positionsRef}
-        assignment={assignment}
-        neighborPairs={neighborPairs}
-        parkedColors={parkedColors}
       />
       <SatelliteStars
         baseSize={nodeSize}
