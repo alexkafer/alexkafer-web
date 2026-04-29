@@ -49,7 +49,7 @@ function VariantPreviewCard({
   return (
     <div className={`${base} ${tone}`}>
       <div className="flex w-full items-center justify-between font-mono text-[10px] uppercase tracking-widest">
-        <span className={isAssigned ? "text-amber" : "text-mute-500"}>
+        <span className={isAssigned ? "text-amber" : "text-mute-300"}>
           Variant {variant}
         </span>
         <div className="flex items-center gap-1.5">
@@ -67,7 +67,7 @@ function VariantPreviewCard({
         {isAssigned && converted && <span className="text-amber">✓</span>}
       </div>
 
-      <div className="font-mono text-[10px] uppercase tracking-widest text-mute-500">
+      <div className="font-mono text-[10px] uppercase tracking-widest text-mute-300">
         {cta.hint}
       </div>
     </div>
@@ -152,7 +152,7 @@ function Scorecard({
           })}
         </tbody>
       </table>
-      <div className="bg-void-800 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-mute-500">
+      <div className="bg-void-800 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-mute-300">
         Last updated: {relativeTime(generatedAt)}
       </div>
     </div>
@@ -184,7 +184,7 @@ export function ABTestSection() {
         <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Left column: experiment */}
           <div>
-            <div className="space-y-1 font-mono text-xs uppercase tracking-widest text-mute-500">
+            <div className="space-y-1 font-mono text-xs uppercase tracking-widest text-mute-300">
               <div>YOUR SESSION: <span className="text-mute-100">{shortId(sessionId)}</span></div>
               <div>
                 ASSIGNED VARIANT:{" "}
@@ -216,7 +216,7 @@ export function ABTestSection() {
               <button
                 type="button"
                 onClick={reroll}
-                className="font-mono text-xs uppercase tracking-widest text-mute-500 underline-offset-4 hover:text-cyan hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan rounded-sm"
+                className="font-mono text-xs uppercase tracking-widest text-mute-300 underline-offset-4 hover:text-cyan hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan rounded-sm"
               >
                 ↻ Reroll session
               </button>
