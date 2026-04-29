@@ -2,7 +2,7 @@
 // JSON Resume schema (https://jsonresume.org/schema/) export.
 // Sourced from PROFILE + RESUME_TIERS so it can never drift from /resume.
 
-import { PROFILE } from "@/data/profile";
+import { PROFILE, type ProfileLink } from "@/data/profile";
 import { RESUME_TIERS } from "@/data/resume";
 
 export const dynamic = "force-static";
@@ -57,6 +57,14 @@ export async function GET() {
     (e.awards ?? []).map((a) => ({ title: a, awarder: e.name })),
   );
 
+  const emailLink = PROFILE.links.find((l) => l.rel === "email");
+  const email = emailLink?.url.replace(/^mailto:/, "");
+
+  const NETWORK_BY_REL: Partial<Record<ProfileLink["rel"], string>> = {
+    github: "GitHub",
+    linkedin: "LinkedIn",
+  };
+
   const resume = {
     $schema:
       "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
@@ -64,6 +72,7 @@ export async function GET() {
       name: PROFILE.name,
       label: `${PROFILE.jobTitle} · ${PROFILE.employer.team}`,
       url: PROFILE.siteUrl,
+      ...(email ? { email } : {}),
       summary: PROFILE.summary,
       location: {
         city: PROFILE.location.locality,
@@ -71,9 +80,9 @@ export async function GET() {
         countryCode: PROFILE.location.country,
       },
       profiles: PROFILE.links
-        .filter((l) => l.rel === "github")
+        .filter((l) => l.rel in NETWORK_BY_REL)
         .map((l) => ({
-          network: "GitHub",
+          network: NETWORK_BY_REL[l.rel as keyof typeof NETWORK_BY_REL]!,
           username: l.url.replace(/\/+$/, "").split("/").pop() ?? "",
           url: l.url,
         })),

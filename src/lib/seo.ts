@@ -84,7 +84,7 @@ export function buildPersonJsonLd() {
     },
     knowsAbout: [...PROFILE.knowsAbout],
     sameAs: PROFILE.links
-      .filter((l) => l.rel !== "site")
+      .filter((l) => l.rel !== "site" && l.rel !== "email")
       .map((l) => l.url),
   };
 }

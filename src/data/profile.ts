@@ -10,7 +10,7 @@
 export type ProfileLink = {
   label: string;
   url: string;
-  rel: "github" | "email" | "site" | "other";
+  rel: "github" | "linkedin" | "email" | "site" | "other";
 };
 
 export const PROFILE = {
@@ -43,6 +43,8 @@ export const PROFILE = {
   ],
   links: [
     { label: "GitHub", url: "https://github.com/alexkafer", rel: "github" },
+    { label: "LinkedIn", url: "https://www.linkedin.com/in/alexkafer/", rel: "linkedin" },
+    { label: "Email", url: "mailto:me@alexkafer.com", rel: "email" },
     { label: "alexkafer.com", url: "https://alexkafer.com", rel: "site" },
   ] satisfies readonly ProfileLink[],
   /** Canonical site URL — used as `metadataBase` and in JSON-LD. */

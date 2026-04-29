@@ -69,18 +69,22 @@ export default function AboutPage() {
           {"// LINKS"}
         </h2>
         <ul className="space-y-2">
-          {PROFILE.links.map((l) => (
-            <li key={l.url} className="font-mono text-sm">
-              <a
-                href={l.url}
-                className="text-cyan hover:underline"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {l.label} →
-              </a>
-            </li>
-          ))}
+          {PROFILE.links.map((l) => {
+            const isMailto = l.rel === "email";
+            return (
+              <li key={l.url} className="font-mono text-sm">
+                <a
+                  href={l.url}
+                  className="text-cyan hover:underline"
+                  {...(isMailto
+                    ? {}
+                    : { rel: "noopener noreferrer", target: "_blank" })}
+                >
+                  {l.label} →
+                </a>
+              </li>
+            );
+          })}
           <li className="font-mono text-sm">
             <Link href="/resume" className="text-cyan hover:underline">
               Résumé →
