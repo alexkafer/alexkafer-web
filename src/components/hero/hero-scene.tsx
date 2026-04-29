@@ -700,8 +700,9 @@ function HoverOrbit({
     const elapsed = performance.now() - orbitStart.current;
     // φ = total angle traveled since hover started, monotonically increasing.
     const phi = (elapsed / ORBIT_PERIOD_MS) * 2 * Math.PI;
-    // Head angle. Top of circle = (0, +1); clockwise sweep → angle decreases.
-    const headAngle = -phi;
+    // Head angle. Top of circle = (0, +1); with offset = up*cos+right*sin,
+    // increasing angle sweeps clockwise (top → right → bottom → left).
+    const headAngle = phi;
     // Tail length grows during the first lap, then locks at (2π - GAP).
     const maxTailLen = 2 * Math.PI - ORBIT_GAP_RAD;
     const tailLen = Math.min(phi, maxTailLen);
