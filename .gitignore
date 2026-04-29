@@ -57,3 +57,6 @@ next-env.d.ts
 
 # playwright-cli runtime artifacts
 .playwright-cli/
+
+# generated at build time
+/src/data/build-info.json
