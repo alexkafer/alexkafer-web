@@ -63,6 +63,7 @@ export function buildPersonJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Person",
+    "@id": `${SITE}/#person`,
     name: PROFILE.name,
     jobTitle: PROFILE.jobTitle,
     description: PROFILE.summary,
@@ -127,9 +128,9 @@ function safeJsonForScript(data: object): string {
 
 /**
  * Renders a JSON-LD <script> tag. Use as a child element in the route's
- * JSX. The `id` attribute lets consumers identify the element and avoid
- * double-rendering when a route would otherwise inherit a layout-level
- * JSON-LD block.
+ * JSX. The DOM `id` attribute is for inspector ergonomics; crawlers
+ * reconcile multiple JSON-LD blocks for the same entity via the
+ * schema.org `@id` field on the payload itself (see buildPersonJsonLd).
  */
 export function jsonLdScriptProps(id: string, data: object) {
   return {
