@@ -85,6 +85,9 @@ const NODE_COLOR_VEC = new THREE.Color(NODE_COLOR);
 const ACTIVE_SCALE = 1.4;
 const ACTIVE_EMISSIVE = 1.0;
 const BASE_EMISSIVE = 0.6;
+// Stars without a section assigned are background-only (no hover/nav).
+// Scale them down so the section-anchor stars read as the "important" ones.
+const NON_INTERACTIVE_SCALE = 0.55;
 const STAR_COUNT = 1500;
 const STAR_RADIUS = 30;
 const DAMPING = 0.05;
@@ -378,12 +381,19 @@ function ConstellationNodes({
         : 0;
       const hoverHeld = isHoveredStar && hoverElapsed >= HOVER_HOLD_MS;
 
+      // A star is "interactive" if it's mapped to a section — those get the
+      // hover/click DOM hit zones. Unmapped stars stay as decorative cloud
+      // dots and render visibly smaller so the eye is drawn to the
+      // navigable ones.
+      const isInteractive = assignment.starToSection.get(i) !== undefined;
+      const restingScale = isInteractive ? 1 : NON_INTERACTIVE_SCALE;
+
       const targetScale =
         isHoveredStar
           ? ACTIVE_SCALE
           : isActiveStar && anchorPos
             ? ACTIVE_SCALE
-            : 1;
+            : restingScale;
       mesh.scale.lerp(
         tmp.current.set(targetScale, targetScale, targetScale),
         0.15,
