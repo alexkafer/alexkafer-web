@@ -604,8 +604,8 @@ const ORBIT_RADIUS_K = 2.4;          // radius = nodeSize * K
 const ORBIT_LINE_WIDTH_PX = 1.6;     // ring stroke width on screen
 const ORBIT_HEAD_RADIUS_K = 0.16;    // lead dot radius = nodeSize * K (~2× stroke)
 const ORBIT_GAP_RAD = (10 * Math.PI) / 180; // empty arc in front of the head
-const ORBIT_TAIL_SEGMENTS = 8;       // number of fading segments behind the head
-const ORBIT_SUBDIV_PER_SEG = 6;      // sub-vertices per segment (smooth curve)
+const ORBIT_TAIL_SEGMENTS = 24;      // number of fading segments behind the head
+const ORBIT_SUBDIV_PER_SEG = 3;      // sub-vertices per segment (smooth curve)
 const ORBIT_BASE_OPACITY = 0.9;      // opacity of the segment closest to the head
 function HoverOrbit({
   positionsRef,
