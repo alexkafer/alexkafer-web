@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { LABS } from "@/labs";
 import { setScrollState } from "./scroll-state";
+import { HeroHoverOverlay } from "./hero-hover-overlay";
 
 const HeroScene = dynamic(() => import("./hero-scene"), { ssr: false });
 
@@ -107,6 +108,10 @@ export function ConstellationBackground() {
           transition: "background 250ms ease",
         }}
       />
+      {/* Hover/click overlay — DOM hit zones over each section-anchor star.
+          Sits above the canvas + vignette so it can receive pointer events
+          while the rest of the hero layer stays pointer-events-none. */}
+      <HeroHoverOverlay />
     </>
   );
 }

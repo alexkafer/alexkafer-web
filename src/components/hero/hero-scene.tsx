@@ -18,6 +18,11 @@ import { getAnchorWorldPos } from "./dom-anchor";
 import { useTheme } from "@/lib/theme-provider";
 import type { ResolvedTheme } from "@/lib/theme";
 import { planetColor } from "./planet-palette";
+import {
+  heroInteraction,
+  HOVER_HOLD_MS,
+  type InteractiveStar,
+} from "./hero-interaction-state";
 
 // Camera dolly-out intro: tuck the camera deep inside the constellation so
 // the ring (and cloud) wraps around outside the viewport, then pull back
@@ -362,7 +367,23 @@ function ConstellationNodes({
       positionsRef.current[i].copy(mesh.position);
 
       // Scale: active star bigger.
-      const targetScale = isActiveStar && anchorPos ? ACTIVE_SCALE : 1;
+      // Hover state: when a section star has been hovered for >=HOVER_HOLD_MS,
+      // override its color to the section's planet hue and boost emissive
+      // intensity so it reads as "primed to navigate". Hover also nudges
+      // scale up immediately for a clear hit affordance.
+      const hover = heroInteraction.getHover();
+      const isHoveredStar = hover?.starIdx === i;
+      const hoverElapsed = isHoveredStar
+        ? performance.now() - hover.startedAt
+        : 0;
+      const hoverHeld = isHoveredStar && hoverElapsed >= HOVER_HOLD_MS;
+
+      const targetScale =
+        isHoveredStar
+          ? ACTIVE_SCALE
+          : isActiveStar && anchorPos
+            ? ACTIVE_SCALE
+            : 1;
       mesh.scale.lerp(
         tmp.current.set(targetScale, targetScale, targetScale),
         0.15,
@@ -378,12 +399,23 @@ function ConstellationNodes({
 
       // Lerp final color between the two metaphors using themeBlend.
       colorTmp.current.copy(sunTmp.current).lerp(planetTmp.current, tb);
+      // Hover-held override: snap toward the parked planet color regardless
+      // of hero/section blend, so the visual "this is now selectable" cue
+      // reads even when the star is still in cloud formation.
+      if (hoverHeld) {
+        colorTmp.current.lerp(parkedColors[i], 0.85);
+      }
       mat.color.copy(colorTmp.current);
 
       // Emissive: full sun glow at tb=0; black at tb=1 (planets don't glow).
       mat.emissive.copy(sunTmp.current).multiplyScalar(1 - tb);
+      if (hoverHeld) mat.emissive.copy(parkedColors[i]);
       const baseEmis =
-        isActiveStar && anchorPos ? ACTIVE_EMISSIVE : BASE_EMISSIVE;
+        hoverHeld
+          ? ACTIVE_EMISSIVE * 1.2
+          : isActiveStar && anchorPos
+            ? ACTIVE_EMISSIVE
+            : BASE_EMISSIVE;
       mat.emissiveIntensity = baseEmis * (1 - tb);
 
       // Surface: rougher / less metallic in planet mode.
@@ -640,6 +672,44 @@ function PointerTracker({ cursor }: { cursor: React.MutableRefObject<CursorState
   return null;
 }
 
+// Each frame, project every interactive star's world position into pixel
+// coordinates relative to the page (canvas rect + NDC unproject) and write
+// the result into the shared interaction-state map. The DOM hover overlay
+// reads this map on its own raf to position hit zones, ring, and tooltip.
+function InteractiveStarProjector({
+  positionsRef,
+}: {
+  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+}) {
+  const { camera, gl } = useThree();
+  const projVec = useRef(new THREE.Vector3());
+  useFrame(() => {
+    const stars = heroInteraction.getInteractiveStars();
+    if (stars.size === 0) return;
+    const canvas = gl.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    stars.forEach((_star, starIdx) => {
+      const wp = positionsRef.current[starIdx];
+      if (!wp) return;
+      projVec.current.copy(wp).project(camera);
+      // NDC z outside [-1, 1] = behind/past frustum. Add a small NDC margin
+      // so a star drifting just off-screen still gets a hit zone — the DOM
+      // overlay will clip-via-overflow if needed.
+      const visible =
+        projVec.current.z > -1 &&
+        projVec.current.z < 1 &&
+        Math.abs(projVec.current.x) < 1.1 &&
+        Math.abs(projVec.current.y) < 1.1;
+      const screenX = rect.left + ((projVec.current.x + 1) / 2) * w;
+      const screenY = rect.top + ((1 - projVec.current.y) / 2) * h;
+      heroInteraction.setScreenPos(starIdx, screenX, screenY, visible);
+    });
+  });
+  return null;
+}
+
 function Scene() {
   const { viewport } = useThree();
   const halfW = viewport.width / 2;
@@ -697,6 +767,27 @@ function Scene() {
 
   const { resolvedTheme } = useTheme();
 
+  // Register which constellation stars correspond to which sections, with
+  // the planet color and slug we'll need for the hover overlay. Skip the
+  // hero section (idx 0) — its star is decorative; it has no header to
+  // navigate to.
+  useEffect(() => {
+    const interactive: InteractiveStar[] = [];
+    for (let s = 1; s < LABS.length; s++) {
+      const starIdx = assignment.sectionToStar.get(s);
+      if (starIdx === undefined) continue;
+      interactive.push({
+        starIdx,
+        sectionIdx: s,
+        slug: LABS[s].slug,
+        title: LABS[s].title,
+        color: `#${parkedColors[starIdx].getHexString()}`,
+      });
+    }
+    heroInteraction.setInteractiveStars(interactive);
+    return () => heroInteraction.setInteractiveStars([]);
+  }, [assignment, parkedColors]);
+
   return (
     <HeroThemeContext.Provider value={resolvedTheme}>
       <IntroDolly />
@@ -707,6 +798,7 @@ function Scene() {
         color={resolvedTheme === "light" ? "#fff4d6" : "#7dd3fc"}
       />
       <PointerTracker cursor={cursor} />
+      <InteractiveStarProjector positionsRef={positionsRef} />
       {resolvedTheme === "dark" && <Starfield />}
       <ConstellationNodes
         nodes={nodes}
