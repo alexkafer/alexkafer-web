@@ -747,7 +747,7 @@ function Scene() {
 export default function HeroScene() {
   return (
     <Canvas
-      camera={{ position: [0, 0, INTRO_Z_START], fov: 55 }}
+      camera={{ position: [0, 0, INTRO_Z_END], fov: 55 }}
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true }}
       style={{ background: "transparent" }}
@@ -758,15 +758,16 @@ export default function HeroScene() {
 }
 
 /**
- * Sits inside <Canvas> so it can read the active camera. On first mount it
- * snaps the camera to INTRO_Z_START (already the Canvas default, but we
- * re-assert in case the camera was pre-positioned elsewhere) and then
- * eases position.z out to INTRO_Z_END over INTRO_DURATION_S using
- * ease-out-quart. After the dolly completes it stops touching the camera
- * so the existing scroll/cursor logic (which reads camera.position.z to
- * project anchors and the cursor onto the z=0 plane) takes over normally.
+ * Sits inside <Canvas> so it can read the active camera. The Canvas mounts
+ * with the camera at the resting INTRO_Z_END so that <Scene> sizes the
+ * parked layout against the correct viewport (useThree().viewport reads
+ * the current camera Z). On mount we snap the camera in to INTRO_Z_START
+ * and then ease position.z back out to INTRO_Z_END over INTRO_DURATION_S
+ * using ease-out-quart. After the dolly completes it stops touching the
+ * camera so the existing scroll/cursor logic (which reads camera.position.z
+ * to project anchors and the cursor onto the z=0 plane) takes over normally.
  *
- * Honors prefers-reduced-motion: snaps straight to the resting position
+ * Honors prefers-reduced-motion: leaves the camera at the resting position
  * with no animation.
  */
 function IntroDolly() {
@@ -780,8 +781,7 @@ function IntroDolly() {
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
-      camera.position.z = INTRO_Z_END;
-      camera.updateProjectionMatrix();
+      // Camera is already at INTRO_Z_END from the Canvas default.
       completed.current = true;
       return;
     }
