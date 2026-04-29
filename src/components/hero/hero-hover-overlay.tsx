@@ -18,7 +18,6 @@ import {
 // here too: hovering immediately starts the orbit ring, but the tooltip
 // (and the corresponding star color override in the scene) doesn't fire
 // until HOVER_HOLD_MS has elapsed.
-const RING_PX = 28;
 const HIT_PX = 44;
 
 export function HeroHoverOverlay() {
@@ -64,7 +63,6 @@ export function HeroHoverOverlay() {
             star={star}
             x={pos.x}
             y={pos.y}
-            isHovered={isHovered}
             showLabel={showLabel}
           />
         );
@@ -77,13 +75,11 @@ function StarHitZone({
   star,
   x,
   y,
-  isHovered,
   showLabel,
 }: {
   star: InteractiveStar;
   x: number;
   y: number;
-  isHovered: boolean;
   showLabel: boolean;
 }) {
   return (
@@ -138,22 +134,9 @@ function StarHitZone({
         <span className="sr-only">{star.title}</span>
       </a>
 
-      {/* Orbiting ring — appears immediately on hover, fades on leave. */}
-      <span
-        aria-hidden
-        className="absolute left-1/2 top-1/2 rounded-full border transition-opacity duration-200 animate-spin"
-        style={{
-          width: RING_PX,
-          height: RING_PX,
-          marginLeft: -RING_PX / 2,
-          marginTop: -RING_PX / 2,
-          borderColor: star.color,
-          borderRightColor: "transparent",
-          borderWidth: 1.5,
-          opacity: isHovered ? 0.9 : 0,
-          animationDuration: "1.4s",
-        }}
-      />
+      {/* Orbiting comet trail is drawn in 3D as part of the constellation
+          scene (see HoverOrbit in hero-scene.tsx) so it inherits the same
+          wobble/distortion as the star itself. */}
 
       {/* Tooltip — opacity-gates so it fades in instead of pops at HOLD_MS. */}
       <span

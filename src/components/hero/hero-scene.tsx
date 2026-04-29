@@ -589,6 +589,126 @@ function PointerTracker({ cursor }: { cursor: React.MutableRefObject<CursorState
   return null;
 }
 
+// HoverOrbit — a comet trail that orbits the currently hovered section
+// star, drawn inside the Three.js scene so it inherits the same wobble +
+// distortion as the stars themselves (rather than being a perfectly
+// rigid CSS ring on top). It's a chain of N small spheres positioned
+// along an arc; the leading "head" is the brightest/biggest, and each
+// successive trail dot fades in opacity & shrinks. The tail wraps about
+// 80% of the orbit so a small gap separates head from tail — like a
+// satellite leaving a comet trail before it laps itself.
+const ORBIT_TRAIL_COUNT = 22;
+const ORBIT_PERIOD_MS = 1600;
+// Tail covers this fraction of the orbit; the rest stays empty so the
+// head pulls away cleanly each lap instead of catching its own tail.
+const ORBIT_TAIL_ARC = 0.78;
+function HoverOrbit({
+  positionsRef,
+  parkedColors,
+  nodeSize,
+}: {
+  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+  parkedColors: THREE.Color[];
+  nodeSize: number;
+}) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  const orbitStart = useRef(0);
+  const lastIdx = useRef<number | null>(null);
+  // Smoothly fade in/out so quick mouse passes don't flash.
+  const visibility = useRef(0);
+  const { camera } = useThree();
+  const rightVec = useRef(new THREE.Vector3());
+  const upVec = useRef(new THREE.Vector3());
+
+  useFrame(() => {
+    const hover = heroInteraction.getHover();
+    const idx = hover?.starIdx ?? null;
+
+    if (idx !== lastIdx.current) {
+      lastIdx.current = idx;
+      if (idx !== null) orbitStart.current = performance.now();
+    }
+
+    const target = idx !== null && positionsRef.current[idx] ? 1 : 0;
+    visibility.current += (target - visibility.current) * 0.18;
+    const vis = visibility.current;
+
+    // When fully invisible, just hide everything.
+    if (vis < 0.005) {
+      for (const m of refs.current) {
+        if (!m) continue;
+        const mat = m.material as THREE.MeshBasicMaterial;
+        mat.opacity = 0;
+      }
+      return;
+    }
+
+    const center =
+      idx !== null
+        ? positionsRef.current[idx]
+        : lastIdx.current !== null
+          ? positionsRef.current[lastIdx.current]
+          : null;
+    const color = idx !== null ? parkedColors[idx] : null;
+    if (!center || !color) return;
+
+    // Orbit on the camera's view plane so it always reads as a circle
+    // around the star regardless of camera angle / dolly.
+    rightVec.current.setFromMatrixColumn(camera.matrixWorld, 0);
+    upVec.current.setFromMatrixColumn(camera.matrixWorld, 1);
+
+    const radius = nodeSize * 4.4;
+    const elapsed = performance.now() - orbitStart.current;
+    const t = elapsed / ORBIT_PERIOD_MS;
+    // Negative angle = clockwise when viewed from +Z.
+    const headAngle = -t * Math.PI * 2;
+
+    for (let i = 0; i < ORBIT_TRAIL_COUNT; i++) {
+      const m = refs.current[i];
+      if (!m) continue;
+      const back = i / (ORBIT_TRAIL_COUNT - 1); // 0 = head, 1 = tail end
+      // Tail trails BEHIND the head (positive offset = clockwise lag).
+      const angle = headAngle + back * Math.PI * 2 * ORBIT_TAIL_ARC;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      m.position.set(
+        center.x + rightVec.current.x * cosA * radius + upVec.current.x * sinA * radius,
+        center.y + rightVec.current.y * cosA * radius + upVec.current.y * sinA * radius,
+        center.z + rightVec.current.z * cosA * radius + upVec.current.z * sinA * radius,
+      );
+      const headness = 1 - back;
+      const scale = (0.45 + headness * 0.85) * (i === 0 ? 1.15 : 1);
+      m.scale.setScalar(scale);
+      const mat = m.material as THREE.MeshBasicMaterial;
+      mat.color.copy(color);
+      // Quadratic falloff so the head pops and the tail dissolves smoothly.
+      mat.opacity = Math.pow(headness, 1.6) * 0.95 * vis;
+    }
+  });
+
+  return (
+    <group>
+      {Array.from({ length: ORBIT_TRAIL_COUNT }).map((_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+        >
+          <sphereGeometry args={[nodeSize * 0.32, 8, 8]} />
+          <meshBasicMaterial
+            transparent
+            opacity={0}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+
 // Each frame, project every interactive star's world position into pixel
 // coordinates relative to the page (canvas rect + NDC unproject) and write
 // the result into the shared interaction-state map. The DOM hover overlay
@@ -729,6 +849,11 @@ function Scene() {
         positionsRef={positionsRef}
         spread={spread}
         linkDistance={linkDistance}
+      />
+      <HoverOrbit
+        positionsRef={positionsRef}
+        parkedColors={parkedColors}
+        nodeSize={nodeSize}
       />
       <SatelliteStars
         baseSize={nodeSize}
