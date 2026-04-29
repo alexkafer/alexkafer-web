@@ -827,25 +827,21 @@ function Scene() {
       />
       <SatelliteStars
         baseSize={nodeSize}
-        positionsRef={positionsRef}
-        assignment={assignment}
+        spread={spread}
+        reduced={reduced}
       />
     </HeroThemeContext.Provider>
   );
 }
 
-// Satellite stars are smaller anchor stars that follow specific DOM markers
-// (currently the resume tier sub-headers: // CURRENT, // EDUCATION, ...).
-// They live outside the main constellation graph for layout purposes — they
-// don't participate in the cloud/parked layout, the section-links bundle,
-// or the cloud→parked morph — but they ARE visually wired into the graph:
-// each satellite draws a thin line back to its parent section's anchor star
-// (the resume star), so they read as branches off the section star instead
-// of free-floating dots. Each frame we re-query getAnchorWorldPos for their
-// slug; if the marker is in the viewport we snap the sphere to it, ease its
-// opacity in, and fade the connecting line to match. ~55% of the main node
-// size, planet-colored for visual continuity with the parked-layout anchor
-// stars.
+// Satellite stars are smaller anchor stars that ride alongside the resume
+// tier sub-headers (// CURRENT, // EDUCATION, ...). They behave like first-
+// class members of the constellation: in the hero they float in the cloud
+// at stable per-satellite "home" positions with their own lissajous wobble.
+// As the user scrolls into the resume section, each satellite animates
+// from its cloud home to its marker's screen position. When another
+// section is in view, satellites fade out (their headers don't exist
+// there). ~55% the size of a main node, planet-colored.
 const RESUME_SATELLITE_SLUGS = [
   { slug: "resume-tier-now", colorIndex: 0 },
   { slug: "resume-tier-education", colorIndex: 1 },
@@ -855,99 +851,157 @@ const RESUME_SATELLITE_SLUGS = [
 
 const SATELLITE_SCALE = 0.55;
 const SATELLITE_PARENT_SECTION = 1; // resume
+const SATELLITE_LERP = 0.14;
+
+type SatelliteState = {
+  // Stable per-satellite cloud home (computed once from spread). Each
+  // frame we add a lissajous wobble on top of this for the floating feel.
+  home: THREE.Vector3;
+  liss: {
+    ampX: number; ampY: number; ampZ: number;
+    phaseX: number; phaseY: number; phaseZ: number;
+    speed: number;
+  };
+  // Smoothed current world position. Lerps toward the per-frame target
+  // (either the DOM marker or the wobbling cloud home).
+  pos: THREE.Vector3;
+  // Whether the position has been seeded yet (first frame snaps in
+  // instead of streaking from origin).
+  seeded: boolean;
+};
+
+function makeSatelliteState(
+  i: number,
+  total: number,
+  spread: { x: number; y: number; z: number },
+): SatelliteState {
+  // Reuse the cloud layout's seeded RNG style so satellite homes share the
+  // visual character of the main cloud — same radial bands, same depth.
+  // Offset the seed space so satellites don't clobber main-cloud slots.
+  const seed = 9001 + i * 211;
+  const rand = (() => {
+    let s = seed >>> 0;
+    return () => {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 0xffffffff;
+    };
+  })();
+  const a = rand(), b = rand(), c = rand(), d = rand();
+  const angle = (i / total) * Math.PI * 2 + a * 0.6;
+  const radial = 0.45 + b * 0.55;
+  const home = new THREE.Vector3(
+    Math.cos(angle) * radial * spread.x,
+    Math.sin(angle) * radial * spread.y,
+    (c * 2 - 1) * spread.z,
+  );
+  return {
+    home,
+    liss: {
+      ampX: 0.06 + d * 0.04,
+      ampY: 0.06 + a * 0.04,
+      ampZ: 0.04 + b * 0.04,
+      phaseX: a * Math.PI * 2,
+      phaseY: b * Math.PI * 2,
+      phaseZ: c * Math.PI * 2,
+      speed: 0.35 + d * 0.25,
+    },
+    pos: new THREE.Vector3(),
+    seeded: false,
+  };
+}
 
 function SatelliteStars({
   baseSize,
-  positionsRef,
-  assignment,
+  spread,
+  reduced,
 }: {
   baseSize: number;
-  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
-  assignment: SectionAssignment;
+  spread: { x: number; y: number; z: number };
+  reduced: boolean;
 }) {
-  const { camera, gl } = useThree();
+  const { camera, gl, clock } = useThree();
   const meshRefs = useRef<Array<THREE.Mesh | null>>([]);
-  const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
-  const segBuffer = useRef<Float32Array>(new Float32Array(6));
   const size = baseSize * SATELLITE_SCALE;
   const colors = useMemo(
     () => RESUME_SATELLITE_SLUGS.map((s) => planetColor(s.colorIndex)),
     [],
   );
-  const parentStarIdx = assignment.sectionToStar.get(SATELLITE_PARENT_SECTION);
+  const states = useMemo(
+    () =>
+      RESUME_SATELLITE_SLUGS.map((_, i) =>
+        makeSatelliteState(i, RESUME_SATELLITE_SLUGS.length, spread),
+      ),
+    [spread],
+  );
+  const targetVec = useRef(new THREE.Vector3());
 
   useFrame(() => {
-    // Anchor for the connecting lines: the section's main star. positionsRef
-    // already tracks this star (the constellation pulls it to the
-    // resume-marker when in view, otherwise holds it at the parked slot),
-    // so the lines stay attached to a real constellation node either way.
-    const parent =
-      parentStarIdx !== undefined ? positionsRef.current[parentStarIdx] : null;
+    const sc = getScrollState().current;
+    // heroBlend = 1 in hero, 0 in any non-hero section. Mirrors the
+    // ConstellationNodes formula so satellites read as part of the same
+    // visual layer.
+    const heroBlend = sc.activeIndex === 0 ? 1 - sc.blend : 0;
+    // True only when the resume section is the focus (active or being
+    // transitioned to). Outside this window satellite markers don't exist
+    // in the DOM anyway, but we explicitly fade so any stragglers vanish.
+    const inResumeContext =
+      sc.activeIndex === SATELLITE_PARENT_SECTION ||
+      sc.nextIndex === SATELLITE_PARENT_SECTION;
+    const t = clock.getElapsedTime();
 
     RESUME_SATELLITE_SLUGS.forEach((sat, i) => {
       const mesh = meshRefs.current[i];
-      const lineObj = lineRefs.current[i] as unknown as {
-        geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
-        material?: { opacity?: number; transparent?: boolean };
-      } | null;
+      const state = states[i];
+      if (!mesh) return;
 
-      const pos = getAnchorWorldPos(sat.slug, camera, gl.domElement);
+      const markerPos = inResumeContext
+        ? getAnchorWorldPos(sat.slug, camera, gl.domElement)
+        : null;
 
-      if (mesh) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        if (pos) {
-          mesh.position.copy(pos);
-          mat.opacity = THREE.MathUtils.lerp(mat.opacity, 1, 0.18);
-          mesh.visible = true;
-        } else {
-          mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0, 0.22);
-          if (mat.opacity < 0.01) mesh.visible = false;
-        }
+      if (markerPos) {
+        targetVec.current.copy(markerPos);
+      } else {
+        // Cloud home + lissajous wobble (skipped under reduced motion).
+        const { ampX, ampY, ampZ, phaseX, phaseY, phaseZ, speed } = state.liss;
+        const wob = reduced ? 0 : 1;
+        targetVec.current.set(
+          state.home.x + Math.sin(t * speed + phaseX) * ampX * wob,
+          state.home.y + Math.sin(t * speed * 1.3 + phaseY) * ampY * wob,
+          state.home.z + Math.sin(t * speed * 0.9 + phaseZ) * ampZ * wob,
+        );
       }
 
-      if (lineObj?.geometry?.setPositions && parent) {
-        const buf = segBuffer.current;
-        // Hold last position when satellite is off-screen so the fading line
-        // doesn't snap to the origin mid-fade.
-        const a = pos ?? (mesh ? mesh.position : parent);
-        buf[0] = a.x; buf[1] = a.y; buf[2] = a.z;
-        buf[3] = parent.x; buf[4] = parent.y; buf[5] = parent.z;
-        lineObj.geometry.setPositions(buf);
-        if (lineObj.material) {
-          lineObj.material.transparent = true;
-          // Match the sphere's opacity but a touch dimmer so the line reads
-          // as supporting structure rather than a competing element.
-          const meshOpacity =
-            (meshRefs.current[i]?.material as THREE.MeshStandardMaterial)
-              ?.opacity ?? 0;
-          lineObj.material.opacity = meshOpacity * 0.55;
-        }
+      if (!state.seeded) {
+        // First frame: snap to target so satellites don't streak from the
+        // origin when the scene mounts.
+        state.pos.copy(targetVec.current);
+        state.seeded = true;
+      } else if (reduced) {
+        state.pos.copy(targetVec.current);
+      } else {
+        state.pos.lerp(targetVec.current, SATELLITE_LERP);
       }
+
+      mesh.position.copy(state.pos);
+
+      // Visibility: present in the hero cloud, present when on resume,
+      // hidden otherwise. The opacity lerp prevents a hard pop when the
+      // user scrolls past the resume section.
+      const targetOpacity = heroBlend > 0.02 || inResumeContext ? 1 : 0;
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, 0.18);
+      mesh.visible = mat.opacity > 0.01;
     });
   });
 
   return (
     <group>
       {RESUME_SATELLITE_SLUGS.map((sat, i) => (
-        <Line
-          key={`${sat.slug}-link`}
-          ref={(el) => {
-            lineRefs.current[i] = el as unknown as THREE.Object3D | null;
-          }}
-          points={[[0, 0, 0], [0, 0, 0]]}
-          color={colors[i]}
-          opacity={0}
-          transparent
-          lineWidth={1}
-        />
-      ))}
-      {RESUME_SATELLITE_SLUGS.map((sat, i) => (
         <mesh
           key={sat.slug}
           ref={(el) => {
             meshRefs.current[i] = el;
           }}
-          visible={false}
         >
           <sphereGeometry args={[size, 12, 12]} />
           <meshStandardMaterial
