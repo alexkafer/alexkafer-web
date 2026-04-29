@@ -788,7 +788,7 @@ const RESUME_SATELLITE_SLUGS = [
 ] as const;
 
 const SATELLITE_SCALE = 0.55;
-const SATELLITE_PARENT_SECTION = 1; // resume
+const SATELLITE_PARENT_SECTION = 2; // resume (sections: hero=0, about=1, resume=2, demos=3, lab=4)
 const SATELLITE_LERP = 0.14;
 
 type SatelliteState = {
