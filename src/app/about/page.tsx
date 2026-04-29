@@ -16,7 +16,7 @@ export const metadata: Metadata = defaultMetadata({
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-24 md:px-10 text-mute-100">
+    <main id="main-content" className="mx-auto max-w-3xl px-6 py-24 md:px-10 text-mute-100">
       <script {...jsonLdScriptProps("ld-person-about", buildPersonJsonLd())} />
 
       <p className="font-mono text-sm uppercase tracking-widest text-amber">
@@ -28,7 +28,7 @@ export default function AboutPage() {
       <p className="mt-2 font-mono text-sm text-cyan">
         {PROFILE.jobTitle} · {PROFILE.employer.team} · {PROFILE.employer.name}
       </p>
-      <p className="mt-1 font-mono text-xs text-mute-500">
+      <p className="mt-1 font-mono text-xs text-mute-300">
         {PROFILE.location.locality}, {PROFILE.location.region}
       </p>
 
@@ -93,7 +93,7 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <p className="mt-16 font-mono text-xs text-mute-500">
+      <p className="mt-16 font-mono text-xs text-mute-300">
         <Link href="/" className="hover:text-cyan">
           ← back to home
         </Link>

@@ -39,7 +39,7 @@ function ResumeRow({ entry }: { entry: ResumeEntry }) {
 
 export default function ResumePage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-24 md:px-10 text-mute-100">
+    <main id="main-content" className="mx-auto max-w-3xl px-6 py-24 md:px-10 text-mute-100">
       <script {...jsonLdScriptProps("ld-person-resume", buildResumeJsonLd())} />
 
       <p className="font-mono text-sm uppercase tracking-widest text-amber">
@@ -51,7 +51,7 @@ export default function ResumePage() {
       <p className="mt-2 font-mono text-sm text-cyan">
         {PROFILE.jobTitle} · {PROFILE.employer.team} · {PROFILE.employer.name}
       </p>
-      <p className="mt-1 font-mono text-xs text-mute-500">
+      <p className="mt-1 font-mono text-xs text-mute-300">
         {PROFILE.location.locality}, {PROFILE.location.region}
       </p>
 
@@ -60,7 +60,7 @@ export default function ResumePage() {
         decisions are downstream of the systems thinking.
       </p>
 
-      <p className="mt-4 font-mono text-xs text-mute-500">
+      <p className="mt-4 font-mono text-xs text-mute-300">
         Also available as{" "}
         <Link href="/resume.json" className="text-cyan hover:underline">
           resume.json
@@ -99,7 +99,7 @@ export default function ResumePage() {
         ))}
       </div>
 
-      <p className="mt-16 font-mono text-xs text-mute-500">
+      <p className="mt-16 font-mono text-xs text-mute-300">
         <Link href="/" className="hover:text-cyan">
           ← back to home
         </Link>

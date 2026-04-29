@@ -25,14 +25,14 @@ function DemoCard({ demo }: { demo: Demo }) {
           {demo.name}
         </h3>
         {demo.stars > 0 && (
-          <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-mute-500">
+          <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-mute-300">
             ★ {demo.stars}
           </span>
         )}
       </header>
       <p className="flex-1 text-pretty text-xs leading-relaxed text-mute-300">
         {demo.description || (
-          <span className="text-mute-500">{"// no description"}</span>
+          <span className="text-mute-300">{"// no description"}</span>
         )}
       </p>
       <footer className="flex items-center justify-between gap-3 pt-2">
