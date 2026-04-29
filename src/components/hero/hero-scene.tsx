@@ -56,10 +56,9 @@ const INTRO_DURATION_S = 1.8;
 //   heroBlend       = (activeIndex === 0) ? (1 - blend) : 0
 //   parkedRotation  = lerp(rotationFor(activeIndex), rotationFor(nextIndex),
 //                          rotationBlend), where rotationFor(s) = (s-1)·step
-//                          and rotationBlend ramps fast over progress
-//                          [0.5, 0.6] of the section (independent of `blend`
-//                          so the cloud→parked beat stays leisurely while
-//                          the inter-section rotation snaps).
+//                          and rotationBlend = sc.progress (continuous, so
+//                          the ring rotates smoothly with scroll instead of
+//                          snapping over a narrow window).
 // See section-layouts.ts and section-stars.ts for the geometry side.
 //
 // COMMON TWEAKS
@@ -84,7 +83,7 @@ const BASE_EMISSIVE = 0.6;
 const STAR_COUNT = 1500;
 const STAR_RADIUS = 30;
 const DAMPING = 0.05;
-const BASE_LERP = 0.08;
+const BASE_LERP = 0.18;
 
 const HeroThemeContext = createContext<ResolvedTheme>("dark");
 function useHeroTheme(): ResolvedTheme {
@@ -276,25 +275,19 @@ function ConstellationNodes({
 
     // Scroll-driven Z-rotation of the parked layout: bring the upcoming
     // section's anchor star around to LEFT-CENTER (where its DOM heading
-    // sits) before that section scrolls into view. Section indices walk
-    // clockwise around the ring, so rotationFor(s) = (s-1) * angularStep
-    // brings section s's natural slot back to LEFT.
+    // sits) as we scroll. Section indices walk clockwise around the ring,
+    // so rotationFor(s) = (s-1) * angularStep brings section s's natural
+    // slot back to LEFT.
     //
-    // Rotation has its own faster blend curve (independent of `sc.blend`,
-    // which paces the cloud→parked morph). The next-section header crosses
-    // the bottom of the viewport at roughly progress≈0.5 of the current
-    // section; we want rotation effectively complete by progress≈0.6 so
-    // the anchor star is in position right as the header enters view —
-    // BASE_LERP smoothing handles the visual settle from there. Tweak the
-    // multiplier (currently 10) to widen/narrow that window.
+    // Rotation tracks sc.progress 1:1 across the whole section so the ring
+    // turns continuously with scroll instead of snapping over a narrow
+    // window. BASE_LERP smoothing on each star's `base` adds a touch of
+    // visual easing on top.
     const sectionCount = Math.max(1, LABS.length - 1);
     const angularStep = (Math.PI * 2) / sectionCount;
     const rotationFor = (idx: number) =>
       idx <= 0 ? 0 : (idx - 1) * angularStep;
-    const rotationBlend = Math.min(
-      1,
-      Math.max(0, (sc.progress - 0.5) * 10),
-    );
+    const rotationBlend = Math.min(1, Math.max(0, sc.progress));
     const r0 = rotationFor(sc.activeIndex);
     const r1 = rotationFor(sc.nextIndex);
     const parkedRotation = r0 + (r1 - r0) * rotationBlend;
