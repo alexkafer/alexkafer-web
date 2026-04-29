@@ -43,7 +43,7 @@ export const PROFILE = {
   ],
   links: [
     { label: "GitHub", url: "https://github.com/alexkafer", rel: "github" },
-    { label: "LinkedIn", url: "https://linkedin.alexkafer.com", rel: "linkedin" },
+    { label: "LinkedIn", url: "https://www.linkedin.com/in/alex-kafer-01614147/", rel: "linkedin" },
     { label: "Email", url: "mailto:me@alexkafer.com", rel: "email" },
     { label: "alexkafer.com", url: "https://alexkafer.com", rel: "site" },
   ] satisfies readonly ProfileLink[],
