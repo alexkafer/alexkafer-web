@@ -589,19 +589,22 @@ function PointerTracker({ cursor }: { cursor: React.MutableRefObject<CursorState
   return null;
 }
 
-// HoverOrbit — a comet trail that orbits the currently hovered section
-// star, drawn inside the Three.js scene so it inherits the same wobble +
-// distortion as the stars themselves (rather than being a perfectly
-// rigid CSS ring on top). It's a chain of N small spheres positioned
-// along an arc; the leading "head" is the brightest/biggest, and each
-// successive trail dot fades in opacity & shrinks. The tail wraps about
-// 80% of the orbit so a small gap separates head from tail — like a
-// satellite leaving a comet trail before it laps itself.
-const ORBIT_TRAIL_COUNT = 22;
-const ORBIT_PERIOD_MS = 1600;
-// Tail covers this fraction of the orbit; the rest stays empty so the
-// head pulls away cleanly each lap instead of catching its own tail.
-const ORBIT_TAIL_ARC = 0.78;
+// HoverOrbit — a progress-bar style ring that radially reveals around
+// the hovered section star, plus a single small "lead" dot that traces
+// the leading edge of the arc. Drawn inside the Three.js scene so it
+// inherits the same wobble/distortion as the star itself.
+//
+//   p = 0    → just the lead dot at the top (12 o'clock)
+//   p = 0.5  → arc from top to bottom (right half), lead dot at 6 o'clock
+//   p = 1.0  → solid ring all the way around
+//
+// On reaching p=1 we briefly hold the full ring, then loop back to p=0.
+const ORBIT_SEGMENTS = 96;          // resolution of the full ring
+const ORBIT_PERIOD_MS = 2200;        // time to draw the full ring
+const ORBIT_HOLD_FRAC = 0.18;        // fraction of period to hold a full ring
+const ORBIT_RADIUS_K = 2.4;          // radius = nodeSize * K (closer to the star than before)
+const ORBIT_LINE_WIDTH_PX = 1.6;     // ring stroke width on screen
+const ORBIT_HEAD_RADIUS_K = 0.16;    // lead dot radius = nodeSize * K (~2× stroke)
 function HoverOrbit({
   positionsRef,
   parkedColors,
@@ -611,7 +614,14 @@ function HoverOrbit({
   parkedColors: THREE.Color[];
   nodeSize: number;
 }) {
-  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  // drei's Line wraps three-stdlib Line2; we just need the imperative
+  // setPositions handle and material refs, so type loosely.
+  type LineHandle = {
+    geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
+    material?: { opacity?: number; transparent?: boolean; color?: THREE.Color };
+  };
+  const lineRef = useRef<LineHandle | null>(null);
+  const headRef = useRef<THREE.Mesh | null>(null);
   const orbitStart = useRef(0);
   const lastIdx = useRef<number | null>(null);
   // Smoothly fade in/out so quick mouse passes don't flash.
@@ -619,6 +629,15 @@ function HoverOrbit({
   const { camera } = useThree();
   const rightVec = useRef(new THREE.Vector3());
   const upVec = useRef(new THREE.Vector3());
+  // Ring-position buffer: ORBIT_SEGMENTS+1 vertices × 3 components.
+  const buf = useRef<Float32Array>(new Float32Array((ORBIT_SEGMENTS + 1) * 3));
+
+  // Initial line points — collapsed to origin; replaced every frame.
+  const initialPoints = useMemo<[number, number, number][]>(() => {
+    const arr: [number, number, number][] = [];
+    for (let i = 0; i <= ORBIT_SEGMENTS; i++) arr.push([0, 0, 0]);
+    return arr;
+  }, []);
 
   useFrame(() => {
     const hover = heroInteraction.getHover();
@@ -633,13 +652,20 @@ function HoverOrbit({
     visibility.current += (target - visibility.current) * 0.18;
     const vis = visibility.current;
 
-    // When fully invisible, just hide everything.
-    if (vis < 0.005) {
-      for (const m of refs.current) {
-        if (!m) continue;
-        const mat = m.material as THREE.MeshBasicMaterial;
+    const hideAll = () => {
+      if (lineRef.current?.material) {
+        lineRef.current.material.transparent = true;
+        lineRef.current.material.opacity = 0;
+      }
+      if (headRef.current) {
+        const mat = headRef.current.material as THREE.MeshBasicMaterial;
+        mat.transparent = true;
         mat.opacity = 0;
       }
+    };
+
+    if (vis < 0.005) {
+      hideAll();
       return;
     }
 
@@ -650,60 +676,106 @@ function HoverOrbit({
           ? positionsRef.current[lastIdx.current]
           : null;
     const color = idx !== null ? parkedColors[idx] : null;
-    if (!center || !color) return;
+    if (!center || !color) {
+      hideAll();
+      return;
+    }
 
-    // Orbit on the camera's view plane so it always reads as a circle
-    // around the star regardless of camera angle / dolly.
+    // Camera-aligned orbit basis: ring lies on the view plane so it always
+    // reads as a true circle to the viewer regardless of camera angle.
     rightVec.current.setFromMatrixColumn(camera.matrixWorld, 0);
     upVec.current.setFromMatrixColumn(camera.matrixWorld, 1);
+    const rx = rightVec.current.x, ry = rightVec.current.y, rz = rightVec.current.z;
+    const ux = upVec.current.x, uy = upVec.current.y, uz = upVec.current.z;
 
-    const radius = nodeSize * 4.4;
+    const radius = nodeSize * ORBIT_RADIUS_K;
     const elapsed = performance.now() - orbitStart.current;
-    const t = elapsed / ORBIT_PERIOD_MS;
-    // Negative angle = clockwise when viewed from +Z.
-    const headAngle = -t * Math.PI * 2;
+    const cycleMs = ORBIT_PERIOD_MS * (1 + ORBIT_HOLD_FRAC);
+    const cyclePos = (elapsed % cycleMs) / cycleMs;
+    // Within a cycle: first chunk grows the arc, last chunk holds the
+    // full ring before snapping back to 0.
+    const drawFrac = 1 / (1 + ORBIT_HOLD_FRAC);
+    const p = cyclePos < drawFrac ? cyclePos / drawFrac : 1;
 
-    for (let i = 0; i < ORBIT_TRAIL_COUNT; i++) {
-      const m = refs.current[i];
-      if (!m) continue;
-      const back = i / (ORBIT_TRAIL_COUNT - 1); // 0 = head, 1 = tail end
-      // Tail trails BEHIND the head (positive offset = clockwise lag).
-      const angle = headAngle + back * Math.PI * 2 * ORBIT_TAIL_ARC;
-      const cosA = Math.cos(angle);
-      const sinA = Math.sin(angle);
-      m.position.set(
-        center.x + rightVec.current.x * cosA * radius + upVec.current.x * sinA * radius,
-        center.y + rightVec.current.y * cosA * radius + upVec.current.y * sinA * radius,
-        center.z + rightVec.current.z * cosA * radius + upVec.current.z * sinA * radius,
+    // Top-of-circle = (0, +1) in (right,up). Clockwise when viewed from
+    // +Z: angle θ → offset = up*cos(θ) + right*sin(θ).
+    const angleAt = (frac: number) => 2 * Math.PI * frac;
+
+    // Build the visible arc up to p. We always write all SEGMENTS+1
+    // vertices (Line2 expects a fixed-size buffer); vertices beyond the
+    // visible end collapse to the leading-edge point so they draw as
+    // zero-length segments and don't visually leak.
+    const visibleEnd = Math.max(1, Math.ceil(p * ORBIT_SEGMENTS));
+    const writeVertex = (vi: number, frac: number) => {
+      const a = angleAt(frac);
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      const ox = ux * ca + rx * sa;
+      const oy = uy * ca + ry * sa;
+      const oz = uz * ca + rz * sa;
+      buf.current[vi * 3]     = center.x + ox * radius;
+      buf.current[vi * 3 + 1] = center.y + oy * radius;
+      buf.current[vi * 3 + 2] = center.z + oz * radius;
+    };
+    for (let i = 0; i <= visibleEnd; i++) {
+      const frac = Math.min(i / ORBIT_SEGMENTS, p);
+      writeVertex(i, frac);
+    }
+    // Collapse remaining vertices onto the leading edge.
+    const ex = buf.current[visibleEnd * 3];
+    const ey = buf.current[visibleEnd * 3 + 1];
+    const ez = buf.current[visibleEnd * 3 + 2];
+    for (let i = visibleEnd + 1; i <= ORBIT_SEGMENTS; i++) {
+      buf.current[i * 3]     = ex;
+      buf.current[i * 3 + 1] = ey;
+      buf.current[i * 3 + 2] = ez;
+    }
+
+    if (lineRef.current?.geometry?.setPositions) {
+      lineRef.current.geometry.setPositions(buf.current);
+    }
+    if (lineRef.current?.material) {
+      lineRef.current.material.transparent = true;
+      lineRef.current.material.color?.copy(color);
+      lineRef.current.material.opacity = 0.85 * vis;
+    }
+
+    // Lead dot at the leading edge of the arc.
+    if (headRef.current) {
+      const a = angleAt(p);
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      headRef.current.position.set(
+        center.x + (ux * ca + rx * sa) * radius,
+        center.y + (uy * ca + ry * sa) * radius,
+        center.z + (uz * ca + rz * sa) * radius,
       );
-      const headness = 1 - back;
-      const scale = (0.45 + headness * 0.85) * (i === 0 ? 1.15 : 1);
-      m.scale.setScalar(scale);
-      const mat = m.material as THREE.MeshBasicMaterial;
+      const mat = headRef.current.material as THREE.MeshBasicMaterial;
+      mat.transparent = true;
       mat.color.copy(color);
-      // Quadratic falloff so the head pops and the tail dissolves smoothly.
-      mat.opacity = Math.pow(headness, 1.6) * 0.95 * vis;
+      mat.opacity = vis;
     }
   });
 
   return (
     <group>
-      {Array.from({ length: ORBIT_TRAIL_COUNT }).map((_, i) => (
-        <mesh
-          key={i}
-          ref={(el) => {
-            refs.current[i] = el;
-          }}
-        >
-          <sphereGeometry args={[nodeSize * 0.32, 8, 8]} />
-          <meshBasicMaterial
-            transparent
-            opacity={0}
-            depthWrite={false}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
+      <Line
+        ref={lineRef as unknown as React.Ref<never>}
+        points={initialPoints}
+        color="white"
+        lineWidth={ORBIT_LINE_WIDTH_PX}
+        transparent
+        opacity={0}
+      />
+      <mesh ref={headRef}>
+        <sphereGeometry args={[nodeSize * ORBIT_HEAD_RADIUS_K, 12, 12]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
     </group>
   );
 }
