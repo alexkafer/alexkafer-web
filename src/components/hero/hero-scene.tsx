@@ -740,7 +740,78 @@ function Scene() {
         neighborPairs={neighborPairs}
         parkedColors={parkedColors}
       />
+      <SatelliteStars baseSize={nodeSize} />
     </HeroThemeContext.Provider>
+  );
+}
+
+// Satellite stars are smaller anchor stars that follow specific DOM markers
+// (currently the resume tier sub-headers: // CURRENT, // EDUCATION, ...).
+// They live outside the main constellation graph: they don't participate in
+// the cloud/parked layout, the section-links bundle, or the cloud→parked
+// morph. Each frame we re-query getAnchorWorldPos for their slug; if the
+// marker is in the viewport we snap the sphere to it and ease its opacity
+// in, otherwise we ease opacity out. Visually they mimic the main section
+// anchor stars but at ~55% of the node size, so the sub-headers feel like
+// quieter siblings of the section's primary star.
+const RESUME_SATELLITE_SLUGS = [
+  { slug: "resume-tier-now", colorIndex: 0 },
+  { slug: "resume-tier-education", colorIndex: 1 },
+  { slug: "resume-tier-internships", colorIndex: 2 },
+  { slug: "resume-tier-before", colorIndex: 3 },
+] as const;
+
+const SATELLITE_SCALE = 0.55;
+
+function SatelliteStars({ baseSize }: { baseSize: number }) {
+  const { camera, gl } = useThree();
+  const refs = useRef<Array<THREE.Mesh | null>>([]);
+  const size = baseSize * SATELLITE_SCALE;
+  const colors = useMemo(
+    () => RESUME_SATELLITE_SLUGS.map((s) => planetColor(s.colorIndex)),
+    [],
+  );
+
+  useFrame(() => {
+    RESUME_SATELLITE_SLUGS.forEach((sat, i) => {
+      const mesh = refs.current[i];
+      if (!mesh) return;
+      const pos = getAnchorWorldPos(sat.slug, camera, gl.domElement);
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      if (pos) {
+        mesh.position.copy(pos);
+        mat.opacity = THREE.MathUtils.lerp(mat.opacity, 1, 0.18);
+        mesh.visible = true;
+      } else {
+        mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0, 0.22);
+        if (mat.opacity < 0.01) mesh.visible = false;
+      }
+    });
+  });
+
+  return (
+    <group>
+      {RESUME_SATELLITE_SLUGS.map((sat, i) => (
+        <mesh
+          key={sat.slug}
+          ref={(el) => {
+            refs.current[i] = el;
+          }}
+          visible={false}
+        >
+          <sphereGeometry args={[size, 12, 12]} />
+          <meshStandardMaterial
+            color={colors[i]}
+            emissive={colors[i]}
+            emissiveIntensity={0.65}
+            roughness={0.4}
+            metalness={0.1}
+            transparent
+            opacity={0}
+          />
+        </mesh>
+      ))}
+    </group>
   );
 }
 

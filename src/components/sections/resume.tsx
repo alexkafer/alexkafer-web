@@ -86,12 +86,12 @@ export function ResumeSection() {
           {RESUME_TIERS.map((tier) => (
             <section
               key={tier.id}
-              aria-labelledby={`resume-tier-${tier.id}`}
+              aria-labelledby={`resume-tier-${tier.id}-marker`}
               className="border-t border-mute-700/40 pt-6"
             >
               <h3
-                id={`resume-tier-${tier.id}`}
-                className="mb-6 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/60"
+                id={`resume-tier-${tier.id}-marker`}
+                className="mb-6 ml-9 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan/60"
               >
                 {tier.label}
               </h3>
