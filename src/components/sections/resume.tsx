@@ -78,35 +78,29 @@ export function ResumeSection() {
           </h2>
           <div className="max-w-2xl space-y-4 text-pretty text-base leading-relaxed text-mute-300">
             <p>
-              I started building stuff in middle school. The school newspaper
-              needed a website, so I made one. Teachers needed little apps for
-              things, so I made those too. My family&apos;s annual holiday
-              e-card was a project of mine for years. (Sorry, family.)
+              I&apos;ve been a builder since middle school &mdash; first a
+              school newspaper site so I could tell stories with code, then
+              apps for my teachers and e&#8209;cards for the family holiday
+              card. High school is where I learned what it feels like to ship
+              hardware on a deadline: I joined the robotics team, made drive
+              team, and we won regionals. By senior year I&apos;d helped spin
+              up 17 more robotics teams across elementary and middle schools
+              in my district, because the community around the work mattered
+              as much as the work.
             </p>
             <p>
-              In high school I joined the robotics team. That was the first
-              time I&apos;d shipped hardware on a real deadline, and the first
-              time I figured out how much I could love losing sleep over
-              something. Drive team, regional champs, the whole bit. Senior
-              year I got roped into starting more teams; we ended up launching
-              17 across elementary and middle schools in the district. Most of
-              those kids weren&apos;t going to become engineers, and I
-              didn&apos;t really care &mdash; what I liked was watching a room
-              of fourth&#8209;graders argue about gear ratios.
+              I studied CS in college with a focus on robotics and AI, but
+              kept stacking product&#8209;design classes alongside the
+              algorithms. My favorite thing I built was an interactive
+              lightshow &mdash; guests scanned a QR code and steered the
+              lights with the gyroscope in their phone. The kind of small
+              interaction that delights the people who notice it.
             </p>
             <p>
-              I studied CS in college, robotics and AI, but kept sneaking into
-              product&#8209;design classes. The thing I&apos;m proudest of
-              from those years is a lightshow you controlled with your
-              phone&apos;s gyroscope: scan a QR code, tilt your phone, the
-              lights tilt with you. People love it when an interaction feels
-              like a secret.
-            </p>
-            <p>
-              Same shape of problem still pulls me in. How does this feed
-              into that. What&apos;s going to break when the load doubles.
-              Which of these tiny details is the one nobody will notice but
-              everyone will feel.
+              That&apos;s still the through&#8209;line. I love how one system
+              feeds into another, and the small details most people won&apos;t
+              catch are where being thoughtful and intentional actually
+              matters.
             </p>
           </div>
         </div>
