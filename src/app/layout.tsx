@@ -3,6 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/lib/lenis-provider";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { buildPersonJsonLd, jsonLdScriptProps } from "@/lib/seo";
+import { PROFILE } from "@/data/profile";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,23 +19,23 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Alex Kafer — Senior PM, Xbox Platform",
-  description: "Building secure, reliable platform services at billions/day.",
-  metadataBase: new URL("https://alexkafer.com"),
+  title: `${PROFILE.name} — Senior PM, Xbox Platform`,
+  description: PROFILE.summary,
+  metadataBase: new URL(PROFILE.siteUrl),
   alternates: {
-    canonical: "https://alexkafer.com/",
+    canonical: `${PROFILE.siteUrl}/`,
   },
   openGraph: {
     type: "website",
-    url: "https://alexkafer.com",
-    title: "Alex Kafer — Senior PM, Xbox Platform",
-    description: "Building secure, reliable platform services at billions/day.",
-    siteName: "Alex Kafer",
+    url: PROFILE.siteUrl,
+    title: `${PROFILE.name} — Senior PM, Xbox Platform`,
+    description: PROFILE.summary,
+    siteName: PROFILE.name,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Alex Kafer — Senior PM, Xbox Platform",
-    description: "Building secure, reliable platform services at billions/day.",
+    title: `${PROFILE.name} — Senior PM, Xbox Platform`,
+    description: PROFILE.summary,
   },
   robots: {
     index: true,
@@ -95,6 +97,9 @@ export default function RootLayout({
         <ThemeProvider>
           <LenisProvider>{children}</LenisProvider>
         </ThemeProvider>
+        <script
+          {...jsonLdScriptProps("ld-person-root", buildPersonJsonLd())}
+        />
         <script
           type="application/x-ascii-art"
           dangerouslySetInnerHTML={{ __html: ASCII_EASTER_EGG }}

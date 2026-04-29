@@ -1,4 +1,9 @@
 import { Mail } from "lucide-react";
+import { PROFILE, type ProfileLink } from "@/data/profile";
+
+function MailIcon({ className }: { className?: string }) {
+  return <Mail className={className} aria-hidden="true" />;
+}
 
 // Brand icons (GitHub, LinkedIn) are not shipped by lucide-react; use inline SVGs.
 function GithubIcon({ className }: { className?: string }) {
@@ -27,8 +32,27 @@ function LinkedinIcon({ className }: { className?: string }) {
   );
 }
 
+const FOOTER_ICONS: Partial<
+  Record<ProfileLink["rel"], React.ComponentType<{ className?: string }>>
+> = {
+  email: MailIcon,
+  github: GithubIcon,
+  linkedin: LinkedinIcon,
+};
+
+const FOOTER_LINK_ORDER: ReadonlyArray<ProfileLink["rel"]> = [
+  "email",
+  "github",
+  "linkedin",
+];
+
 export default function Footer() {
   const year = new Date().getFullYear();
+  const footerLinks = FOOTER_LINK_ORDER.flatMap((rel) => {
+    const link = PROFILE.links.find((l) => l.rel === rel);
+    return link ? [link] : [];
+  });
+
   return (
     <footer className="border-t border-mute-700/50 bg-void">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 font-mono">
@@ -37,31 +61,24 @@ export default function Footer() {
             {`// © ${year} Alex Kafer · transmitted from Seattle, WA`}
           </p>
           <div className="flex items-center gap-5">
-            <a
-              href="mailto:me@alexkafer.com"
-              aria-label="Email Alex Kafer"
-              className="text-mute-300 transition-colors duration-200 hover:text-cyan hover:[filter:drop-shadow(0_0_6px_rgba(125,211,252,0.6))]"
-            >
-              <Mail className="h-5 w-5" aria-hidden="true" />
-            </a>
-            <a
-              href="https://linkedin.alexkafer.com"
-              aria-label="Alex Kafer on LinkedIn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-mute-300 transition-colors duration-200 hover:text-cyan hover:[filter:drop-shadow(0_0_6px_rgba(125,211,252,0.6))]"
-            >
-              <LinkedinIcon className="h-5 w-5" />
-            </a>
-            <a
-              href="https://github.com/alexkafer"
-              aria-label="Alex Kafer on GitHub"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-mute-300 transition-colors duration-200 hover:text-cyan hover:[filter:drop-shadow(0_0_6px_rgba(125,211,252,0.6))]"
-            >
-              <GithubIcon className="h-5 w-5" />
-            </a>
+            {footerLinks.map((link) => {
+              const Icon = FOOTER_ICONS[link.rel];
+              if (!Icon) return null;
+              const isMailto = link.rel === "email";
+              return (
+                <a
+                  key={link.rel}
+                  href={link.url}
+                  aria-label={link.label}
+                  {...(isMailto
+                    ? {}
+                    : { target: "_blank", rel: "noreferrer noopener" })}
+                  className="text-mute-300 transition-colors duration-200 hover:text-cyan hover:[filter:drop-shadow(0_0_6px_rgba(125,211,252,0.6))]"
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -39,12 +39,9 @@ export default function Page() {
         <div className="sr-only">
           <h2>About Alex Kafer</h2>
           <p>
-            Senior Product Manager on the Xbox Platform team at Microsoft. Five
-            years of platform-engineering experience building secure, reliable,
-            efficient services at scale. Previously: Xbox Cloud Gaming, Xbox
-            Remote Play, and a NASA-JSC NLP requirements-tooling project. B.S.
-            Computer Science, University of Minnesota — robotics + AI
-            specialization with a product design minor.
+            Senior Product Manager on the Xbox Platform team at Microsoft.{" "}
+            <a href="/about">Read the full bio</a> or view the{" "}
+            <a href="/resume">résumé</a>.
           </p>
         </div>
       </main>

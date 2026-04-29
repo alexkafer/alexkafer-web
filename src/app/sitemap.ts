@@ -1,12 +1,28 @@
+// src/app/sitemap.ts
 import type { MetadataRoute } from "next";
+import { PROFILE } from "@/data/profile";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date();
+  const site = PROFILE.siteUrl;
   return [
     {
-      url: "https://alexkafer.com",
-      lastModified: new Date(),
+      url: `${site}/`,
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 1,
+    },
+    {
+      url: `${site}/resume`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
+      url: `${site}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
   ];
 }
