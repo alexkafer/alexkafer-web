@@ -733,20 +733,27 @@ function Scene() {
         neighborPairs={neighborPairs}
         parkedColors={parkedColors}
       />
-      <SatelliteStars baseSize={nodeSize} />
+      <SatelliteStars
+        baseSize={nodeSize}
+        positionsRef={positionsRef}
+        assignment={assignment}
+      />
     </HeroThemeContext.Provider>
   );
 }
 
 // Satellite stars are smaller anchor stars that follow specific DOM markers
 // (currently the resume tier sub-headers: // CURRENT, // EDUCATION, ...).
-// They live outside the main constellation graph: they don't participate in
-// the cloud/parked layout, the section-links bundle, or the cloud→parked
-// morph. Each frame we re-query getAnchorWorldPos for their slug; if the
-// marker is in the viewport we snap the sphere to it and ease its opacity
-// in, otherwise we ease opacity out. Visually they mimic the main section
-// anchor stars but at ~55% of the node size, so the sub-headers feel like
-// quieter siblings of the section's primary star.
+// They live outside the main constellation graph for layout purposes — they
+// don't participate in the cloud/parked layout, the section-links bundle,
+// or the cloud→parked morph — but they ARE visually wired into the graph:
+// each satellite draws a thin line back to its parent section's anchor star
+// (the resume star), so they read as branches off the section star instead
+// of free-floating dots. Each frame we re-query getAnchorWorldPos for their
+// slug; if the marker is in the viewport we snap the sphere to it, ease its
+// opacity in, and fade the connecting line to match. ~55% of the main node
+// size, planet-colored for visual continuity with the parked-layout anchor
+// stars.
 const RESUME_SATELLITE_SLUGS = [
   { slug: "resume-tier-now", colorIndex: 0 },
   { slug: "resume-tier-education", colorIndex: 1 },
@@ -755,29 +762,74 @@ const RESUME_SATELLITE_SLUGS = [
 ] as const;
 
 const SATELLITE_SCALE = 0.55;
+const SATELLITE_PARENT_SECTION = 1; // resume
 
-function SatelliteStars({ baseSize }: { baseSize: number }) {
+function SatelliteStars({
+  baseSize,
+  positionsRef,
+  assignment,
+}: {
+  baseSize: number;
+  positionsRef: React.MutableRefObject<THREE.Vector3[]>;
+  assignment: SectionAssignment;
+}) {
   const { camera, gl } = useThree();
-  const refs = useRef<Array<THREE.Mesh | null>>([]);
+  const meshRefs = useRef<Array<THREE.Mesh | null>>([]);
+  const lineRefs = useRef<(THREE.Object3D | null)[]>([]);
+  const segBuffer = useRef<Float32Array>(new Float32Array(6));
   const size = baseSize * SATELLITE_SCALE;
   const colors = useMemo(
     () => RESUME_SATELLITE_SLUGS.map((s) => planetColor(s.colorIndex)),
     [],
   );
+  const parentStarIdx = assignment.sectionToStar.get(SATELLITE_PARENT_SECTION);
 
   useFrame(() => {
+    // Anchor for the connecting lines: the section's main star. positionsRef
+    // already tracks this star (the constellation pulls it to the
+    // resume-marker when in view, otherwise holds it at the parked slot),
+    // so the lines stay attached to a real constellation node either way.
+    const parent =
+      parentStarIdx !== undefined ? positionsRef.current[parentStarIdx] : null;
+
     RESUME_SATELLITE_SLUGS.forEach((sat, i) => {
-      const mesh = refs.current[i];
-      if (!mesh) return;
+      const mesh = meshRefs.current[i];
+      const lineObj = lineRefs.current[i] as unknown as {
+        geometry?: { setPositions?: (arr: ArrayLike<number>) => void };
+        material?: { opacity?: number; transparent?: boolean };
+      } | null;
+
       const pos = getAnchorWorldPos(sat.slug, camera, gl.domElement);
-      const mat = mesh.material as THREE.MeshStandardMaterial;
-      if (pos) {
-        mesh.position.copy(pos);
-        mat.opacity = THREE.MathUtils.lerp(mat.opacity, 1, 0.18);
-        mesh.visible = true;
-      } else {
-        mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0, 0.22);
-        if (mat.opacity < 0.01) mesh.visible = false;
+
+      if (mesh) {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        if (pos) {
+          mesh.position.copy(pos);
+          mat.opacity = THREE.MathUtils.lerp(mat.opacity, 1, 0.18);
+          mesh.visible = true;
+        } else {
+          mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0, 0.22);
+          if (mat.opacity < 0.01) mesh.visible = false;
+        }
+      }
+
+      if (lineObj?.geometry?.setPositions && parent) {
+        const buf = segBuffer.current;
+        // Hold last position when satellite is off-screen so the fading line
+        // doesn't snap to the origin mid-fade.
+        const a = pos ?? (mesh ? mesh.position : parent);
+        buf[0] = a.x; buf[1] = a.y; buf[2] = a.z;
+        buf[3] = parent.x; buf[4] = parent.y; buf[5] = parent.z;
+        lineObj.geometry.setPositions(buf);
+        if (lineObj.material) {
+          lineObj.material.transparent = true;
+          // Match the sphere's opacity but a touch dimmer so the line reads
+          // as supporting structure rather than a competing element.
+          const meshOpacity =
+            (meshRefs.current[i]?.material as THREE.MeshStandardMaterial)
+              ?.opacity ?? 0;
+          lineObj.material.opacity = meshOpacity * 0.55;
+        }
       }
     });
   });
@@ -785,10 +837,23 @@ function SatelliteStars({ baseSize }: { baseSize: number }) {
   return (
     <group>
       {RESUME_SATELLITE_SLUGS.map((sat, i) => (
+        <Line
+          key={`${sat.slug}-link`}
+          ref={(el) => {
+            lineRefs.current[i] = el as unknown as THREE.Object3D | null;
+          }}
+          points={[[0, 0, 0], [0, 0, 0]]}
+          color={colors[i]}
+          opacity={0}
+          transparent
+          lineWidth={1}
+        />
+      ))}
+      {RESUME_SATELLITE_SLUGS.map((sat, i) => (
         <mesh
           key={sat.slug}
           ref={(el) => {
-            refs.current[i] = el;
+            meshRefs.current[i] = el;
           }}
           visible={false}
         >
