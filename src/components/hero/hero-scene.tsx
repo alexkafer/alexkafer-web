@@ -19,6 +19,15 @@ import { useTheme } from "@/lib/theme-provider";
 import type { ResolvedTheme } from "@/lib/theme";
 import { planetColor } from "./planet-palette";
 
+// Camera dolly-out intro: tuck the camera deep inside the constellation so
+// the ring (and cloud) wraps around outside the viewport, then pull back
+// to the resting Z over INTRO_DURATION_S with ease-out-quart. Gives the
+// scene a "the camera was always here, it just zoomed out to show you"
+// reveal, instead of a hard pop-in once the bundle loads.
+const INTRO_Z_START = 0.6;
+const INTRO_Z_END = 8;
+const INTRO_DURATION_S = 1.8;
+
 // Hero scene — Three.js constellation behind the page.
 //
 // MOVING PARTS (in render order)
@@ -697,6 +706,7 @@ function Scene() {
 
   return (
     <HeroThemeContext.Provider value={resolvedTheme}>
+      <IntroDolly />
       <ambientLight intensity={resolvedTheme === "light" ? 0.6 : 0.4} />
       <pointLight
         position={[6, 4, 6]}
@@ -737,7 +747,7 @@ function Scene() {
 export default function HeroScene() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 8], fov: 55 }}
+      camera={{ position: [0, 0, INTRO_Z_START], fov: 55 }}
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true }}
       style={{ background: "transparent" }}
@@ -745,4 +755,52 @@ export default function HeroScene() {
       <Scene />
     </Canvas>
   );
+}
+
+/**
+ * Sits inside <Canvas> so it can read the active camera. On first mount it
+ * snaps the camera to INTRO_Z_START (already the Canvas default, but we
+ * re-assert in case the camera was pre-positioned elsewhere) and then
+ * eases position.z out to INTRO_Z_END over INTRO_DURATION_S using
+ * ease-out-quart. After the dolly completes it stops touching the camera
+ * so the existing scroll/cursor logic (which reads camera.position.z to
+ * project anchors and the cursor onto the z=0 plane) takes over normally.
+ *
+ * Honors prefers-reduced-motion: snaps straight to the resting position
+ * with no animation.
+ */
+function IntroDolly() {
+  const { camera } = useThree();
+  const startTime = useRef<number | null>(null);
+  const completed = useRef(false);
+
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      camera.position.z = INTRO_Z_END;
+      camera.updateProjectionMatrix();
+      completed.current = true;
+      return;
+    }
+    camera.position.z = INTRO_Z_START;
+    camera.updateProjectionMatrix();
+  }, [camera]);
+
+  useFrame((state) => {
+    if (completed.current) return;
+    if (startTime.current === null) startTime.current = state.clock.elapsedTime;
+    const elapsed = state.clock.elapsedTime - startTime.current;
+    const t = Math.min(1, elapsed / INTRO_DURATION_S);
+    const eased = 1 - Math.pow(1 - t, 4);
+    camera.position.z = INTRO_Z_START + (INTRO_Z_END - INTRO_Z_START) * eased;
+    if (t >= 1) {
+      camera.position.z = INTRO_Z_END;
+      completed.current = true;
+    }
+  });
+
+  return null;
 }
