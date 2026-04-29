@@ -73,7 +73,7 @@ export function DemosSection() {
             id="demos-marker"
             className="ml-9 font-mono text-sm uppercase tracking-widest text-amber"
           >
-            {"// 02 · DEMOS"}
+            {"// 03 · DEMOS"}
           </p>
           <h2 className="text-balance font-sans text-4xl font-semibold leading-tight text-mute-100 md:text-6xl">
             <span className="block">Things I&apos;ve built.</span>

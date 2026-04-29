@@ -4,6 +4,7 @@ import Hero from "@/components/hero";
 import HudChrome from "@/components/hero/hud-chrome";
 import LazyConstellation from "@/components/hero/lazy-constellation";
 import Resume from "@/components/sections/resume";
+import About from "@/components/sections/about";
 import Demos from "@/components/sections/demos";
 import ABTest from "@/components/sections/ab-test";
 import Footer from "@/components/chrome/footer";
@@ -23,6 +24,7 @@ export default function Page() {
       <HudChrome />
       <main id="main-content" className="relative z-10 text-mute-100">
         <Hero />
+        <About />
         <Resume />
         <Demos />
         <ABTest />

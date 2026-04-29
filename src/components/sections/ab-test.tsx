@@ -169,7 +169,7 @@ export function ABTestSection() {
     <Section id="lab" aria-label="Live A/B test">
       <SectionInner>
         <p id="lab-marker" className="ml-9 font-mono text-xs uppercase tracking-widest text-amber">
-          {"// 03 · LAB"}
+          {"// 04 · LAB"}
         </p>
         <h2 className="mt-4 text-4xl font-semibold text-mute-100 md:text-5xl">
           I learn by doing. A live A/B test.
