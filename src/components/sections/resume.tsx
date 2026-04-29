@@ -76,10 +76,33 @@ export function ResumeSection() {
               Systems engineer by instinct.
             </span>
           </h2>
-          <p className="max-w-2xl text-pretty text-base leading-relaxed text-mute-300">
-            Five years building secure, reliable platform services. The product
-            decisions are downstream of the systems thinking.
-          </p>
+          <div className="max-w-2xl space-y-4 text-pretty text-base leading-relaxed text-mute-300">
+            <p>
+              I&apos;ve been a builder since middle school &mdash; first a
+              school newspaper site so I could tell stories with code, then
+              apps for my teachers and e&#8209;cards for the family holiday
+              card. High school is where I learned what it feels like to ship
+              hardware on a deadline: I joined the robotics team, made drive
+              team, and we won regionals. By senior year I&apos;d helped spin
+              up 17 more robotics teams across elementary and middle schools
+              in my district, because the community around the work mattered
+              as much as the work.
+            </p>
+            <p>
+              I studied CS in college with a focus on robotics and AI, but
+              kept stacking product&#8209;design classes alongside the
+              algorithms. My favorite thing I built was an interactive
+              lightshow &mdash; guests scanned a QR code and steered the
+              lights with the gyroscope in their phone. The kind of small
+              interaction that delights the people who notice it.
+            </p>
+            <p>
+              That&apos;s still the through&#8209;line. I love how one system
+              feeds into another, and the small details most people won&apos;t
+              catch are where being thoughtful and intentional actually
+              matters.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-10">
