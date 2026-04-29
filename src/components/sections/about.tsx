@@ -38,7 +38,7 @@ export function AboutSection() {
 
           <div className="max-w-2xl space-y-4 text-pretty text-base leading-relaxed text-mute-300">
             <p>
-              I&apos;ve been a builder since middle school &mdash; first a
+              I&apos;ve been a builder since middle school. First a
               school newspaper site so I could tell stories with code, then
               apps for my teachers and e&#8209;cards for the family holiday
               card. High school is where I learned what it feels like to ship
@@ -52,7 +52,7 @@ export function AboutSection() {
               I studied CS in college with a focus on robotics and AI, but
               kept stacking product&#8209;design classes alongside the
               algorithms. My favorite thing I built was an interactive
-              lightshow &mdash; guests scanned a QR code and steered the
+              lightshow: guests scanned a QR code and steered the
               lights with the gyroscope in their phone. The kind of small
               interaction that delights the people who notice it.
             </p>
