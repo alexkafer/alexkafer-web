@@ -12,25 +12,13 @@ function LogoMark({
   name: string;
   src?: string;
 }) {
-  // Render the SVG as a silhouette via CSS mask so it themes cleanly:
-  // pure black on light backgrounds, pure white on dark. The original
-  // SVG fills are ignored — only the shape carries through.
   const url = src ?? `/logos/${slug}.svg`;
+  // eslint-disable-next-line @next/next/no-img-element
   return (
-    <span
-      role="img"
-      aria-label={`${name} logo`}
-      className="relative inline-block h-8 w-16 shrink-0 bg-black opacity-90 transition-opacity hover:opacity-100 dark:bg-white"
-      style={{
-        WebkitMaskImage: `url(${url})`,
-        maskImage: `url(${url})`,
-        WebkitMaskRepeat: "no-repeat",
-        maskRepeat: "no-repeat",
-        WebkitMaskPosition: "left center",
-        maskPosition: "left center",
-        WebkitMaskSize: "contain",
-        maskSize: "contain",
-      }}
+    <img
+      src={url}
+      alt={`${name} logo`}
+      className="h-8 w-16 shrink-0 object-contain object-left opacity-90 transition-opacity hover:opacity-100"
     />
   );
 }
@@ -74,9 +62,7 @@ export function ResumeSection() {
             Where I&apos;ve <span className="text-cyan">shipped.</span>
           </h2>
           <p className="max-w-2xl text-pretty text-base leading-relaxed text-mute-300">
-            Five years on platform services across Xbox, NASA, and earlier
-            gigs. The pattern: ship the system, sweat the integration, keep
-            the seams quiet.
+            Six years on platform services across Xbox, NASA, and earlier.
           </p>
         </div>
 

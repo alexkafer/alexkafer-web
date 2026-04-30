@@ -10,7 +10,7 @@ function smoothScrollTo(selector: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// "See the experiment" jump pill at the bottom of the hero. Extracted from
+// Jump pill at the bottom of the hero. Extracted from
 // HeroCopy so it can be mounted AFTER the constellation hit zones in DOM
 // order — that way the keyboard tab flow runs:
 //   Learn With Me → Variant CTA → 4 constellation stars → see-experiment
@@ -29,16 +29,14 @@ export function HeroExperimentJump() {
   );
 
   const rateContent = (() => {
-    if (!assigned)
-      return (
-        <span>{"// live · calibrating live experiment… · see the experiment ↓"}</span>
-      );
+    if (!assigned) return;
+      
     if (assignedRate == null) {
       return (
         <span className="inline-flex items-center gap-1">
           <span>{"// live · Variant"}</span>
           {variantBadge}
-          <span>{"awaiting first conversion · see the experiment ↓"}</span>
+          <span>{"awaiting first conversion ↓"}</span>
         </span>
       );
     }
@@ -46,7 +44,7 @@ export function HeroExperimentJump() {
       <span className="inline-flex items-center gap-1">
         <span>{"// live · Variant"}</span>
         {variantBadge}
-        <span>{`converting at ${assignedRate.toFixed(1)}% · see the experiment ↓`}</span>
+        <span>{`converting at ${assignedRate.toFixed(1)}% ↓`}</span>
       </span>
     );
   })();
