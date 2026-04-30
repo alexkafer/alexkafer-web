@@ -50,8 +50,7 @@ export function AboutSection() {
             </p>
             <p>
               I studied CS in college with a focus on robotics and AI, but
-              kept stacking product&#8209;design classes alongside the
-              algorithms. My favorite thing I built was an interactive
+              paired with product&#8209;design classes on the side. My favorite thing I built was an interactive
               lightshow: guests scanned a QR code and steered the
               lights with the gyroscope in their phone. The kind of small
               interaction that delights the people who notice it.
