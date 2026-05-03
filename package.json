@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/generate-build-info.mjs && next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/generate-build-info.mjs && NEXT_PUBLIC_BUILD_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo dev) NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) next build",
     "start": "next start",
     "lint": "next lint",
+    "test:dev": "node --test scripts/*.test.mjs",
+    "test:labs": "rm -rf /tmp/alexkafer-labs-tests && tsc --module commonjs --moduleResolution node --target es2022 --lib es2022,dom --esModuleInterop --skipLibCheck --strict --noEmit false --outDir /tmp/alexkafer-labs-tests src/lib/labs/*.test.ts && node --test /tmp/alexkafer-labs-tests/*.test.js",
     "demos:refresh": "node scripts/refresh-demos.mjs",
     "db:migrate:local": "wrangler d1 migrations apply alexkafer-ab --local",
     "db:migrate:remote": "wrangler d1 migrations apply alexkafer-ab --remote",
@@ -25,6 +27,7 @@
     "lenis": "^1.3.23",
     "lucide-react": "^1.11.0",
     "next": "14.2.35",
+    "qrcode": "1.5.4",
     "react": "^18",
     "react-dom": "^18",
     "three": "^0.184.0"
@@ -32,6 +35,7 @@
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.14.10",
     "@types/node": "^20",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.184.0",

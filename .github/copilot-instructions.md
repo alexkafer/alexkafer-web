@@ -31,18 +31,15 @@ hung), shut it down (see below) before starting fresh.
 ### Start the dev server
 
 ```bash
-# One-time per machine: start the proxy on the unprivileged HTTPS port.
-# Skip this if `portless ls` already shows the proxy as running.
-portless proxy start --port 1355 --https
-
-# Start the app (detached so it survives the shell). Logs go to /tmp/portless-dev.log.
+# Start the app through the package script. It generates build info, starts
+# portless on the unprivileged HTTPS port if needed, and runs Next behind it.
 cd /Users/alexkafer/Development/alexkafer
-nohup portless alexkafer next dev > /tmp/portless-dev.log 2>&1 &
+nohup npm run dev > /tmp/portless-dev.log 2>&1 &
 ```
 
 Portless assigns a random internal port via `PORT=…` and proxies
-`https://alexkafer.localhost:1355` → that port. Next.js picks up `PORT`
-automatically.
+`https://alexkafer.localhost:1355` (or `https://alexkafer.local:1355` when LAN
+mode is active) → that port. Next.js picks up `PORT` automatically.
 
 ### Tail the logs
 
