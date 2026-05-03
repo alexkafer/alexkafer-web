@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Section, SectionInner } from "@/components/section";
 import demosData from "@/data/demos.json";
 
@@ -84,6 +85,12 @@ export function DemosSection() {
           <p className="max-w-2xl text-pretty text-base leading-relaxed text-mute-300">
             A curated slice of public repositories.
           </p>
+          <Link
+            href="/labs"
+            className="inline-flex w-fit items-center rounded-full border border-cyan/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.24em] text-cyan transition hover:bg-cyan/10"
+          >
+            enter the living laboratory →
+          </Link>
         </div>
 
         {DEMOS.length === 0 ? (

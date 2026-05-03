@@ -25,9 +25,9 @@ Skipping the migrate step will surface as `D1_ERROR: no such table: ab_events`
 in the A/B test section — re-run it any time you add a file under
 `migrations/` or wipe `.wrangler/`.
 
-### Dev server behind portless (optional)
+### Dev server behind portless
 
-The author runs the dev server behind [portless][portless], which proxies a
+The dev server runs behind [portless][portless], which proxies a
 stable HTTPS URL (e.g. `https://alexkafer.localhost:1355`) to whatever random
 port Next.js picked. This is convenient for testing things that need real
 HTTPS (secure cookies, service workers, OAuth callbacks) without touching
@@ -36,15 +36,13 @@ HTTPS (secure cookies, service workers, OAuth callbacks) without touching
 [portless]: https://portless.sh
 
 ```bash
-# One-time per machine: start the proxy on an unprivileged HTTPS port.
-portless proxy start --port 1355 --https
-
-# Start the app under portless. It assigns a random PORT and proxies to it.
-portless alexkafer next dev
+# Starts portless on port 1355 if needed, then runs Next behind it.
+npm run dev
 ```
 
-Plain `npm run dev` on `localhost:3000` continues to work and is the supported
-path for everyone else.
+`npm run dev` defaults to HTTPS + LAN mode so real devices can open the
+paired-controller URL at `https://alexkafer.local:1355`. Override with
+`PORTLESS_LAN=0 npm run dev` if you only want the `.localhost` route.
 
 ### Other scripts
 
@@ -52,6 +50,7 @@ path for everyone else.
 npm run build              # production build (injects build SHA + time)
 npm run start              # serve the production build
 npm run lint               # eslint via next lint
+npm run test:dev           # unit-test the portless dev wrapper
 npx tsc --noEmit           # type-check
 npm run demos:refresh      # rehydrate src/data/demos.json from GitHub
 npm run db:migrate:local   # apply migrations/ to local D1 (.wrangler/)
