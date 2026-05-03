@@ -12,7 +12,7 @@ test("LABS exposes unique ordered slugs for the laboratory index", () => {
   );
 });
 
-test("registry includes the lunar lander prototype with phone pairing metadata", () => {
+test("registry includes the lunar lander prototype with phone controller metadata", () => {
   const lab = getLabBySlug("lunar-lander");
 
   assert.equal(lab?.title, "Lunar Lander");

@@ -21,9 +21,9 @@ const LAB_DEFINITIONS: readonly LabDefinition[] = [
   {
     slug: "lunar-lander",
     title: "Lunar Lander",
-    eyebrow: "paired device prototype",
+    eyebrow: "shared world prototype",
     summary:
-      "A precision landing game where the desktop becomes mission control and a phone becomes the flight stick.",
+      "A precision landing MMO where every desktop sees the same lunar surface and phones spawn live flight sticks.",
     href: "/labs/lunar-lander",
     order: 10,
     status: "prototype",
