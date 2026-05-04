@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: "/labs/lunar-lander/:path*",
-        destination: "https://galacticsector.com",
+        destination: "/labs",
         permanent: false,
       },
     ];
