@@ -1936,5 +1936,3 @@ export function createLunarLanderWorldStore({
     serializeWorld,
   };
 }
-
-export const lunarLanderWorldStore = createLunarLanderWorldStore();
