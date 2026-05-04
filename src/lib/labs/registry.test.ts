@@ -12,10 +12,10 @@ test("LABS exposes unique ordered slugs for the laboratory index", () => {
   );
 });
 
-test("registry includes the lunar lander prototype with phone controller metadata", () => {
-  const lab = getLabBySlug("lunar-lander");
+test("registry includes the story relay concept placeholder", () => {
+  const lab = getLabBySlug("story-relay");
 
-  assert.equal(lab?.title, "Lunar Lander");
-  assert.equal(lab?.interaction, "paired-phone");
-  assert.equal(lab?.href, "/labs/lunar-lander");
+  assert.equal(lab?.title, "Story Relay");
+  assert.equal(lab?.interaction, "single-screen");
+  assert.equal(lab?.href, "/labs#story-relay");
 });

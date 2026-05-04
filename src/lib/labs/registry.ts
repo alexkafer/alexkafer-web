@@ -1,5 +1,5 @@
 export type LabStatus = "prototype" | "concept" | "field-note";
-export type LabInteraction = "single-screen" | "paired-phone";
+export type LabInteraction = "single-screen";
 
 export type LabDefinition = {
   slug: string;
@@ -19,29 +19,13 @@ export type LabDefinition = {
 
 const LAB_DEFINITIONS: readonly LabDefinition[] = [
   {
-    slug: "lunar-lander",
-    title: "Lunar Lander",
-    eyebrow: "shared world prototype",
-    summary:
-      "A precision landing MMO where every desktop sees the same lunar surface and phones spawn live flight sticks.",
-    href: "/labs/lunar-lander",
-    order: 10,
-    status: "prototype",
-    interaction: "paired-phone",
-    theme: {
-      name: "mission control",
-      accent: "cyan",
-      background: "radial-gradient(circle at 50% 0%, #1e293b 0%, #050510 58%)",
-    },
-  },
-  {
     slug: "story-relay",
     title: "Story Relay",
     eyebrow: "future slot",
     summary:
       "A placeholder for experiments where multiple devices reveal different slices of the same scene.",
     href: "/labs#story-relay",
-    order: 20,
+    order: 10,
     status: "concept",
     interaction: "single-screen",
     theme: {

@@ -15,17 +15,9 @@ migrations_dir = "migrations"
 name = "STATS_AGGREGATOR"
 class_name = "StatsAggregator"
 
-[[durable_objects.bindings]]
-name = "LunarLanderParty"
-class_name = "LunarLanderParty"
-
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["StatsAggregator"]
-
-[[migrations]]
-tag = "v2"
-new_sqlite_classes = ["LunarLanderParty"]
 
 [vars]
 NEXT_PUBLIC_BUILD_SHA = "dev"

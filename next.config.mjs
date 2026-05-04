@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/labs/lunar-lander/:path*",
+        destination: "https://galacticsector.com",
+        permanent: false,
+      },
+    ];
+  },
   // Isolate dev's build artifacts from production's so running `npm run build`
   // (or `cf:build`) while the portless dev server is up doesn't clobber the
   // dev server's webpack chunks — which would leave the browser fetching 404'd
