@@ -17,6 +17,7 @@
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@alexkafer/qr-art": "github:alexkafer/qr-art",
     "@gsap/react": "^2.1.2",
     "@libsql/client": "^0.17.3",
     "@react-three/drei": "^9.122.0",

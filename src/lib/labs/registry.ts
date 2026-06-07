@@ -19,6 +19,22 @@ export type LabDefinition = {
 
 const LAB_DEFINITIONS: readonly LabDefinition[] = [
   {
+    slug: "qr-art",
+    title: "QR Art Generator",
+    eyebrow: "creative tools",
+    summary:
+      "Embed pixel art directly into scannable QR codes by reverse-engineering the encoding pipeline — art pixels become valid data, not error correction.",
+    href: "/labs/qr-art",
+    order: 1,
+    status: "prototype",
+    interaction: "single-screen",
+    theme: {
+      name: "reverse engineering",
+      accent: "cyan",
+      background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)",
+    },
+  },
+  {
     slug: "story-relay",
     title: "Story Relay",
     eyebrow: "future slot",
