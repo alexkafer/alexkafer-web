@@ -10,6 +10,7 @@ export default function QRArtClient() {
         defaultVersion={5}
         defaultEcLevel="L"
         showModuleMap={false}
+        theme="dark"
       />
     </div>
   );
