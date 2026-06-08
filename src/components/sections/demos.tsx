@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Section, SectionInner } from "@/components/section";
 import demosData from "@/data/demos.json";
+import { LABS } from "@/lib/labs/registry";
 
 type Demo = {
   repo: string;
@@ -105,6 +106,44 @@ export function DemosSection() {
               </li>
             ))}
           </ul>
+        )}
+
+        {LABS.filter((lab) => lab.status !== "concept").length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-mono text-xs uppercase tracking-widest text-cyan/70">
+              {"// living laboratory"}
+            </h3>
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {LABS.filter((lab) => lab.status !== "concept").map((lab) => (
+                <li key={lab.slug} className="h-full">
+                  <Link
+                    href={lab.href}
+                    className="group flex h-full flex-col gap-3 rounded-md border border-mute-700/50 bg-void-800/40 p-5 transition-colors hover:border-cyan/40"
+                  >
+                    <header className="flex items-start justify-between gap-3">
+                      <h4 className="min-w-0 truncate text-sm font-semibold text-mute-100">
+                        {lab.title}
+                      </h4>
+                      <span className="shrink-0 rounded-full border border-cyan/30 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-cyan/70">
+                        {lab.status}
+                      </span>
+                    </header>
+                    <p className="flex-1 text-pretty text-xs leading-relaxed text-mute-300">
+                      {lab.summary}
+                    </p>
+                    <footer className="flex items-center justify-between gap-3 pt-2">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-cyan/70">
+                        {lab.eyebrow}
+                      </span>
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-amber transition-colors group-hover:text-amber/70">
+                        open →
+                      </span>
+                    </footer>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </SectionInner>
     </Section>
